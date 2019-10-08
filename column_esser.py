@@ -28,7 +28,7 @@ tab1 = pd.read_csv('Esser_table1.csv', nrows = 69, delimiter=' ', index_col=Fals
 duration = 700*ms     # Total simulation time
 sim_dt = 0.1*ms           # Integrator/sampling step
 
-fl.parameters
+fl.parameters()
 
 ###############################################################################
 ########                     Neuron Equations                           #######
@@ -65,13 +65,13 @@ column1.v = column1.theta_eq #initialise resting potential
 
 #Input Areas - SMA, PME, THA, RN
 in_type = ['THA']
-in_num = [125]
+in_num = [37]
 in_values = {}
 fl.initialise_neurons(in_type, in_num, in_values)
 
-Input_Neurons = b2.NeuronGroup(125, eqs,
+Input_Neurons = b2.NeuronGroup(37, eqs,
                   threshold = 'v > theta', 
-                  reset = 'v = theta',
+                  reset = 'v = theta_eq',
                   events={'on_spike': 'v > theta'},
                   method = 'rk4',
                   refractory = 2*ms)
@@ -84,7 +84,7 @@ times = []
 indices = []
 num_spikes1 = round(duration/b2.ms/1000*15)
 
-for j in range(75):
+for j in range(25):
     x = 0
     s1 = np.random.uniform(50, 100, num_spikes1)
     for k in range(len(s1)):
@@ -95,17 +95,17 @@ for j in range(75):
 mu, sigma = round(1000/1), round(100/1) 
 num_spikes2 = round(duration/b2.ms/1000*1)
 
-for j in range(50):
+for j in range(12):
     x = 0
     s2 = np.random.normal(mu, sigma, num_spikes2)
     for k in range(len(s2)):
         x += s2[k]
-        times.append(np.round(x))
-        indices.append(j + 74)
+        times.append(round(x))
+        indices.append(j + 24)
 
 input_indices= b2.array(indices)
 input_times = times*ms
-Spike = b2.SpikeGeneratorGroup(125, input_indices, input_times)
+Spike = b2.SpikeGeneratorGroup(37, input_indices, input_times)
 
 ### Define Neuronal Subgroups
 neuron_group = {'L2/3E': column1[0:50], 
@@ -114,11 +114,11 @@ neuron_group = {'L2/3E': column1[0:50],
                 'L5I': column1[125:150], 
                 'L6E': column1[150:200], 
                 'L6I': column1[200:225],
-                'MTE': Input_Neurons[0:25],
-                'MTI': Input_Neurons[25:50],
-                'RI': Input_Neurons[50:75],
-                'SIE': Input_Neurons[75:100],
-                'PME': Input_Neurons[100:125]
+                'MTE': Input_Neurons[0:12],
+                'MTI': Input_Neurons[12:18],
+                'RI': Input_Neurons[18:25],
+                'SIE': Input_Neurons[25:31],
+                'PME': Input_Neurons[31:37]
                 }
 
 TMS = b2.SpikeGeneratorGroup(1, [0], [500]*ms)
@@ -141,6 +141,8 @@ synapse.connect(j='i', p=1)
 synapse.w = 1
 #plt.figure(figsize = (40,40))
 #fl.visualise_connectivity(synapse)
+
+#!Specify as clock driven or event driven
 
 #Define motor cortex synapses
 for i, r in tab1.iterrows():
@@ -172,7 +174,7 @@ spikemon = b2.SpikeMonitor(column1, variables = ['v', 't'])
 spikemonL23 = b2.SpikeMonitor(neuron_group['L2/3E'], variables = ['v', 't'])
 spikemonL5 = b2.SpikeMonitor(neuron_group['L5E'], variables = ['v', 't'])
 spikemonL6 = b2.SpikeMonitor(neuron_group['L6E'], variables = ['v', 't'])
-inputstatemon = b2.StateMonitor(Input_Neurons, 'v', record=range(125))
+inputstatemon = b2.StateMonitor(Input_Neurons, 'v', record=range(37))
 inputspikemon = b2.SpikeMonitor(neuron_group['MTE'], variables = ['v', 't'])
 
 ###############################################################################
@@ -221,7 +223,7 @@ plt.show()
 plt.figure(figsize=(12,5))
 plt.subplot(2,1,1)
 plt.plot(inputstatemon.t[2000:]/ms, inputstatemon.v[1][2000:], 'C6', label='MTE')
-plt.plot(inputstatemon.t[2000:]/ms, inputstatemon.v[120][2000:], 'C4', label='PME')
+#plt.plot(inputstatemon.t[2000:]/ms, inputstatemon.v[120][2000:], 'C4', label='PME')
 plt.ylabel('v')
 plt.legend()
 plt.subplot(2,1,2)
@@ -283,6 +285,12 @@ colours = mpl.colors.ListedColormap(newcolours, name='OrangeBlue')
 viridis = cm.get_cmap('viridis', 256)
 
 data = statemon.v
+fig, axs = plt.subplots(figsize=(5, 2), constrained_layout=True)
+psm = axs.pcolormesh(data, cmap=viridis, rasterized=True, vmin=-0.07, vmax=-0.05)
+fig.colorbar(psm, ax=axs)
+plt.show()
+
+data = inputstatemon.v
 fig, axs = plt.subplots(figsize=(5, 2), constrained_layout=True)
 psm = axs.pcolormesh(data, cmap=viridis, rasterized=True, vmin=-0.07, vmax=-0.05)
 fig.colorbar(psm, ax=axs)

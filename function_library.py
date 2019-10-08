@@ -5,40 +5,39 @@ Created on Wed Jul 10 14:01:07 2019
 @author: lmun373
 """
 import numpy as np
-import brian2
-from brian2 import *
+import brian2 as b2
 
 ###############################################################################
 ########                    Function Definitions                       ########
 ########                                                               ########        
 ###############################################################################
 
-def parameters ():
+def parameters():
     #Channel Parameters
-    tau1_AMPA = 0.5*ms
-    tau2_AMPA = 2.4*ms
-    Erev_AMPA = 0*mV
+    tau1_AMPA = 0.5*b2.ms
+    tau2_AMPA = 2.4*b2.ms
+    Erev_AMPA = 0*b2.mV
     gpeak_AMPA = 0.1
     
-    tau1_GABAA = 1*ms
-    tau2_GABAA = 7*ms
-    Erev_GABAA = -70*mV
+    tau1_GABAA = 1*b2.ms
+    tau2_GABAA = 7*b2.ms
+    Erev_GABAA = -70*b2.mV
     gpeak_GABAA = 0.33
     
-    tau1_GABAB = 60*ms
-    tau2_GABAB = 200*ms
-    Erev_GABAB = -90*mV
+    tau1_GABAB = 60*b2.ms
+    tau2_GABAB = 200*b2.ms
+    Erev_GABAB = -90*b2.mV
     gpeak_GABAB = 0.0132
     
-    tau1_NMDA = 4*ms
-    tau2_NMDA = 40*ms
-    Erev_NMDA = 0*mV
+    tau1_NMDA = 4*b2.ms
+    tau2_NMDA = 40*b2.ms
+    Erev_NMDA = 0*b2.mV
     gpeak_NMDA = 0.1
     
-    Constants
-    EK = -90*mV               # Potassium
-    ENa = 30*mV               # Sodium
-    El = -10.6 * mV
+    #Constants
+    EK = -90*b2.mV               # Potassium
+    ENa = 30*b2.mV               # Sodium
+    El = -10.6 *b2.mV
     gl = 0.33
     
     #Constant in threshold equation
@@ -52,7 +51,7 @@ def parameters ():
     #name - name of neuron group
 def random_firing (num, meanfiring, name):
     eqs = f"dv/dt = (xi*sqrt(second) + {meanfiring})*Hz : 1"
-    name = NeuronGroup(num, eqs, threshold='v>1', reset='v=0',
+    name = b2.NeuronGroup(num, eqs, threshold='v>1', reset='v=0',
                           method='euler')
     return (name)
 
@@ -114,11 +113,11 @@ def initialise_neurons (ntype, num, dict):
                 g_Na.append(0.2)
                 g_K.append(1.0)
             
-    dict["theta_eq"] = theta_eq*mV
-    dict["tau_theta"] = tau_theta*ms
-    dict["tau_spike"] = tau_spike*ms
-    dict["t_spike"] = t_spike*ms
-    dict["tau_m"] = tau_m*ms
+    dict["theta_eq"] = theta_eq*b2.mV
+    dict["tau_theta"] = tau_theta*b2.ms
+    dict["tau_spike"] = tau_spike*b2.ms
+    dict["t_spike"] = t_spike*b2.ms
+    dict["tau_m"] = tau_m*b2.ms
     dict["gNa"] = g_Na
     dict["gK"] = g_K
     dict["count"] = count             
@@ -159,7 +158,7 @@ def create_synapses(source, target, prob, weight, n_syn):
 def input_firing(mean_frequency, times, zeros, simulation_time): 
     
     mu, sigma = round(1000/mean_frequency), round(100/mean_frequency) 
-    num_spikes = round(simulation_time/brian2.ms/mean_frequency)
+    num_spikes = round(simulation_time/b2.ms/mean_frequency)
     s = np.random.normal(mu, sigma, num_spikes)
     x = 0
     
