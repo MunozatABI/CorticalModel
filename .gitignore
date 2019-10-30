@@ -11,3 +11,6 @@ __pycache__/function_library.cpython-37.pyc
 __pycache__/library.cpython-37.pyc
 Archive/RunFile.py
 Archive/TestingDataFrames.py
+plot_utils.py
+__pycache__/parameters.cpython-37.pyc
+__pycache__/plot_utils.cpython-37.pyc
