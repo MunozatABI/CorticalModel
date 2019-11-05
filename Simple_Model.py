@@ -10,6 +10,7 @@ Created on Thu Jul 25 10:12:50 2019
 import brian2 as b2
 from brian2 import mV, ms, ufarad, cm, umetre, volt, second, msiemens, siemens, nS, pA
 import numpy as np
+import time
 import function_library as fl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D 
@@ -98,6 +99,7 @@ SpikeMon = b2.SpikeMonitor(A)
 ###############################################################################
 net = b2.Network(b2.collect())  #Automatically add visible objects 
 net.add(synapses_group)           #Manually add list of synapses
+
 net.run(simulation_time*ms)
 
 ###############################################################################

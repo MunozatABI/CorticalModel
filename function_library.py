@@ -18,6 +18,15 @@ from brian2 import ms, mV, um, NeuronGroup
 
 #Group of functions to generate neurons and synapses
 class generate:
+    
+    #initialise_neuron function to initialise neuron parameters
+    #ntype - an array of the different types of neurons 
+    #        MPE: Priamry Motor Cortex Excitatory
+    #        L5E: Primary Motor Cortex Layer 5 Excitatory
+    #        MPI: Primary Motor Cortex Inhibitory
+    #        THA: Thalamus
+    #num - an array of the number of neurons of each corresponding ntypes
+    #dict - dictionary to return initial values
     def initialise_neurons (ntype, num, dict):
     #Defining neuron parameters
         theta_eq = []
@@ -32,6 +41,7 @@ class generate:
         Z = []
         count = np.full((1, sum(num)), 0)
         
+    #Define Spatial Arrangement
         Xlength = 300
         Ylength = 300
         
@@ -62,7 +72,7 @@ class generate:
                 else: 
                     Z.append(0)
     
-    
+    #Define parameters according to type
         for i in range(len(num)):
             for j in range(num[i]): 
             
@@ -107,14 +117,6 @@ class generate:
     
         return (dict)
     
-    #spikegen function generates spikes
-    #num - number of spiking neurons
-    #indices - array of neuron indicies to spike, corresponding to times
-    #times - array of times of spikes
-    def spikes(num, indices, times):
-        Spike = b2.SpikeGeneratorGroup(num, indices, times*ms)
-        return Spike
-    
     #neuron function generates neurons
     #n - array of number of neurons according to type
     #eqs - governing equations of neuron dynamics
@@ -133,16 +135,17 @@ class generate:
         neurons.run_on_event('on_spike', 'count = count + 1')
         return neurons
     
-    def column(numcol, eqs):
     #column function generates a column of 225 neurons
-    #I need to make it generate multiple columns
+    #WORK IN PROGRESS
+    #How do make it generate multiple columns...
+    def column(numcol, eqs):
         num = 225 # Number of neurons                                                                     
         ntype = ['MPE', 'MPI', 'L5E', 'MPI', 'MPE', 'MPI']                 # Types of neurons
         num = [50, 25, 50, 25, 50, 25]                                # Number of each type of neuron
         newcolumn = generate.neurons(num, ntype, eqs)
         return newcolumn
 
-    #synapses function generates synapses
+    #synapses function generates multiple synapses
     #Inputs - array of neuron groups
     #Targets - array of neuron groups
     #Transmitters - array of transmitters
@@ -168,6 +171,9 @@ class generate:
             
         return synapses_group    
     
+    #model_synapses function generates synapses for column_esser model
+    #table - table of synapse details from Esser, 2005
+    #neuron_group - column of neurons representing M1, PM, SM, Thalamus
     def model_synapses(table, neuron_group):
         all_synapses=[]
         eqs_syn= equation('synapse')
@@ -185,6 +191,14 @@ class generate:
             syn.delay = r.loc['MeanDelay']*ms
             all_synapses.append(syn)
         return all_synapses
+    
+    #spikegen function generates spikes
+    #num - number of spiking neurons
+    #indices - array of neuron indicies to spike, corresponding to times
+    #times - array of times of spikes
+    def spikes(num, indices, times):
+        Spike = b2.SpikeGeneratorGroup(num, indices, times*ms)
+        return Spike
                 
 #Function to generate randomly firing neurons for Premotor (PM) and Somatosensory
 #(SI) neurons
@@ -196,14 +210,6 @@ def random_firing (num, meanfiring, name):
     name = NeuronGroup(num, eqs, threshold='v>1', reset='v=0',
                           method='euler')
     return (name)
-
-#Function to initialise neuron parameters
-    #ntype - an array of the different types of neurons 
-    #        MPE: Priamry Motor Cortex Excitatory
-    #        L5E: Primary Motor Cortex Layer 5 Excitatory
-    #        MPI: Primary Motor Cortex Inhibitory
-    #num - an array of the number of neurons of each corresponding ntypes
-    #dict - dictionary to return initial values
 
 
 #Function to define multiple synapses
@@ -269,6 +275,7 @@ class visualise():
         b2.xlabel('Source neuron index')
         b2.ylabel('Target neuron index')
 
+#Define equations
 def equation (type):
 
     if type == 'current':
@@ -315,9 +322,9 @@ def equation (type):
                      + C * (v - theta_eq)) / tau_theta
                      : volt
         
-        dv/dt = (g_l*(v-El) - 
-                 g_NA*m**3*h*(v-ENa) - 
-                 g_K*n**4*(v-EK))/Cm: volt
+        dv/dt = (gl*(v-El) - 
+                 gNa*m**3*h*(v-ENa) - 
+                 gK*n**4*(v-EK))/Cm: volt
         
         alphah = .07*exp(-.05*v/mV)/ms    : Hz
         alpham = .1*(25*mV-v)/(exp(2.5-.1*v/mV)-1)/mV/ms : Hz

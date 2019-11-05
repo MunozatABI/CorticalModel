@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+5# -*- coding: utf-8 -*-
 """Column_Esser.ipynb
 In this script, I am aiming to make a column of 225 Neurons
 """
@@ -16,6 +16,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 import function_library as fl
 import numpy as np
+import time
 
 b2.start_scope() #clear variables
 
@@ -154,11 +155,16 @@ net.add(Input_synapses, all_synapses)           #Manually add list of synapses
 
 #Check initial v
 print('Before v = %s' % column1.v[0])
+start = time.time() #Running time
 
 net.run(duration) #Run
 
+end = time.time()
+
 #See what the final v is
 print('After v= %s' % column1.v[0])
+
+print('Time taken:', end-start)
 
 ###############################################################################
 ########                       Plot Graphs                              #######
