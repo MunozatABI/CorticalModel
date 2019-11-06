@@ -10,7 +10,6 @@ Created on Thu Jul 25 10:12:50 2019
 import brian2 as b2
 from brian2 import mV, ms, ufarad, cm, umetre, volt, second, msiemens, siemens, nS, pA
 import numpy as np
-import time
 import function_library as fl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D 
@@ -22,7 +21,7 @@ b2.start_scope()
 import parameters as pm
 from parameters import * 
 
-simulation_time = 1500     # Total simulation time 
+simulation_time = 1000     # Total simulation time 
 
 ###############################################################################
 ########                     Neuron Equations                           #######
@@ -35,29 +34,31 @@ eqs += 'g_AMPA : 1\n g_AMPA_2 :1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitter
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
+#initialise neurons
 neuron_type = ['MPE', 'L5E', 'MPI']
 neuron_num = [1, 1, 1]
 Neurons = fl.generate.neurons(neuron_num, neuron_type, eqs)
 
-#initialise variables for input neurons
+#initialise input (thalamic) neurons
 in_type = ['THA']
 in_num = [2]
 Input_Neurons = fl.generate.neurons(in_num, in_type, eqs)
 
-#Subgrouping
+#Spike definitions for input neurons
+Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms) 
+Spike2 = b2.SpikeGeneratorGroup(1, [0], [500]*ms)
+
+#Subgrouping definitions
 A = Input_Neurons[0:1] #Input Neuron 1
 B = Input_Neurons[1:2] #Input Neuron 2
-G = Neurons[0:1] #MP Inhibitory
-H = Neurons[1:2] #MP Excitatory
-K = Neurons[2:3] #L5 Excitatory
-
-Spike1 = fl.generate.spikes(1, [0], [1000])
-Spike2 = fl.generate.spikes(1, [0], [1000])
+G = Neurons[0:1] #MP Excitatory
+H = Neurons[1:2] #L5 Excitatory
+K = Neurons[2:3] #MP Inhibitory
 
 ###############################################################################
 ########                          Synapses                              #######
 ###############################################################################
-
+#Input_synpase definitions
 Input_syn1 = b2.Synapses(Spike1, A, '''
 dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
 dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
@@ -76,20 +77,23 @@ w : 1
 Input_syn2.connect(p = 1)
 Input_syn2.w = 1
 
-Inputs = [A]
-Targets = [K]
 synapses_group = []
-synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, [1], [0.1], [1.4], S=True)
-
 synapses_group.append(Input_syn1)
 synapses_group.append(Input_syn2)
 
+Inputs = [A] ### Define Inputs here ###
+Targets = [G]  ### Define Targets here ###
+prob = [1]
+weight = [0.1]
+delay = [1.4]
+
+synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, prob, weight, delay, S=True)
 ###############################################################################
 ########                         Monitors                               #######
 ###############################################################################
-M1 = b2.StateMonitor(A, ['v', 'theta'], record=True)
-M2 = b2.StateMonitor(K, 'v', record=True)
-MS = b2.StateMonitor(A, 'v', record=True)
+#Monitoring membrane potentials
+M1 = b2.StateMonitor(Inputs[0], ['v', 'theta'], record=True)
+M2 = b2.StateMonitor(Targets[0], 'v', record=True)
 SpikeMon1 = b2.SpikeMonitor(Spike1)
 SpikeMon = b2.SpikeMonitor(A)
 #SpikeMon2 = b2.SpikeMonitor(Spike2)
@@ -100,19 +104,19 @@ SpikeMon = b2.SpikeMonitor(A)
 net = b2.Network(b2.collect())  #Automatically add visible objects 
 net.add(synapses_group)           #Manually add list of synapses
 
-net.run(simulation_time*ms)
+net.run(simulation_time*ms) #Run simulation
 
 ###############################################################################
 ########                       Plot Graphs                              #######
 ###############################################################################
+#Plot Membrane Potential
 Monitors = [M1, M2]
-Labels = ['neuron1', 'neuron2']
-
+Labels = ['Input Neuron 1', 'Target Neuron 1']
 fl.visualise.membrane_voltage(Labels, Monitors, [0, 0])
-b2.plot(M1.t/b2.ms, M1.theta[0], 'C4-')
+#b2.plot(M1.t/b2.ms, M1.theta[0], 'C4-')
 #b2.plot(SpikeMon.t/b2.ms, SpikeMon.i, '.k') #Plot spiking
 
-fl.visualise.average_firing(['Average Firing'], [SpikeMon], simulation_time)
+#fl.visualise.average_firing(['Average Firing'], [SpikeMon], simulation_time)
 
 ###############################################################################
 ########                       Unused Code                              #######
@@ -142,7 +146,7 @@ fl.visualise.average_firing(['Average Firing'], [SpikeMon], simulation_time)
 #y : meter
 #z : meter
 #'''
-b2.figure()
-b2.plot(M1.t[10000:10050]/b2.ms, M1.v[0][10000:10050], 'C1', label='v')
-b2.plot(M1.t[10000:10050]/b2.ms, M1.theta[0][10000:10050], 'C4-', label = 'theta')
-b2.plot(SpikeMon.t/b2.ms, SpikeMon.i, '.k') #Plot spiking
+#b2.figure()
+#b2.plot(M1.t[10000:10050]/b2.ms, M1.v[0][10000:10050], 'C1', label='v')
+#b2.plot(M1.t[10000:10050]/b2.ms, M1.theta[0][10000:10050], 'C4-', label = 'theta')
+#b2.plot(SpikeMon.t/b2.ms, SpikeMon.i, '.k') #Plot spiking

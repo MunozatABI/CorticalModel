@@ -196,9 +196,34 @@ class generate:
     #num - number of spiking neurons
     #indices - array of neuron indicies to spike, corresponding to times
     #times - array of times of spikes
-    def spikes(num, indices, times):
-        Spike = b2.SpikeGeneratorGroup(num, indices, times*ms)
-        return Spike
+    def spikes(num1, num2, indices, times, duration):
+        
+        #Thalamus 10-20Hz firing
+        for j in range(num1):
+            x = 0
+            numspikes = np.random.uniform(10, 20, 1)
+            s1 = np.random.uniform(50, 100, int(round(numspikes[0])))
+            for k in range(len(s1)):
+                x += s1[k]
+                times.append(round(x))
+                indices.append(j)
+        
+        mu, sigma = round(1000/1), round(100/1.) 
+        num_spikes2 = round(duration/b2.ms/1000*1)
+        
+        #SI and PM 1Hz firing
+        for j in range(num2):
+            x = 0
+            s2 = np.random.normal(mu, sigma, num_spikes2)
+            for k in range(len(s2)):
+                x += s2[k]
+                times.append(round(x))
+                indices.append(j + (num1-1))
+        
+        input_indices= b2.array(indices)
+        input_times = times*ms
+        Spikes = b2.SpikeGeneratorGroup(num1+num2, input_indices, input_times)
+        return Spikes
                 
 #Function to generate randomly firing neurons for Premotor (PM) and Somatosensory
 #(SI) neurons
