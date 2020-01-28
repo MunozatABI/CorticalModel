@@ -39,7 +39,7 @@ class generate:
         X = []
         Y = []
         Z = []
-        count = np.full((1, sum(num)), 0)
+ #       count = np.full((1, sum(num)), 0)
         
     #Define Spatial Arrangement
         Xlength = 300
@@ -113,7 +113,7 @@ class generate:
         dict['X'] = X*um
         dict['Y'] = Y*um
         dict['Z'] = Z*um
-        dict["count"] = count        
+#        dict["count"] = count        
     
         return (dict)
     
@@ -127,12 +127,12 @@ class generate:
         neurons = b2.NeuronGroup(n, eqs,
                   threshold = 'v > theta', 
                  reset = 'v = theta_eq',
-                 events={'on_spike': 'v > theta'},
+#                 events={'on_spike': 'v > theta'},
                   method = 'euler',
                   refractory = 'v > theta')
         neurons.set_states(initial_values)
         neurons.v = neurons.theta_eq #initialise resting potential
-        neurons.run_on_event('on_spike', 'count = count + 1')
+#        neurons.run_on_event('on_spike', 'count = count + 1')
         return neurons
     
     #column function generates a column of 225 neurons
@@ -176,6 +176,8 @@ class generate:
     #neuron_group - column of neurons representing M1, PM, SM, Thalamus
     def model_synapses(table, neuron_group):
         all_synapses=[]
+        src_group=[]
+        tgt_group=[]
         eqs_syn= equation('synapse')
         for i, r in table.iterrows():
             src = r.loc['SourceLayer'] + re.sub('[018()]', '', r.loc['SourceCellType'])
@@ -185,31 +187,39 @@ class generate:
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
-            
-            syn.connect(condition = 'sqrt((X_pre-X_post)**2 + (Y_pre-Y_post)**2) < {}*75*umeter'.format(r.loc['Radius']), p=np.random.normal(r.loc['Pmax'], r.loc['sigma'] , 1)[0]) #Probability of connecting 
+            syn.connect(condition = 'i!=j', p=r.loc['Pmax']) 
+           # syn.connect(condition = 'sqrt((X_pre-X_post)**2 + (Y_pre-Y_post)**2) < {}*75*umeter'.format(r.loc['Radius']), p=np.random.normal(r.loc['Pmax'], r.loc['sigma'] , 1)[0]) #Probability of connecting 
             syn.w = (r.loc['Strength']/10)  #Weights
             syn.delay = r.loc['MeanDelay']*ms
             all_synapses.append(syn)
-        return all_synapses
+            src_group.append(src)
+            tgt_group.append(tgt)
+        return src_group, tgt_group, all_synapses
     
     #spikegen function generates spikes
     #num - number of spiking neurons
     #indices - array of neuron indicies to spike, corresponding to times
     #times - array of times of spikes
-    def spikes(num1, num2, indices, times, duration):
+    def spikes(num1, num2, duration):
+        
+        times = []
+        indices = []
         
         #Thalamus 10-20Hz firing
         for j in range(num1):
             x = 0
-            numspikes = np.random.uniform(10, 20, 1)
-            s1 = np.random.uniform(50, 100, int(round(numspikes[0])))
-            for k in range(len(s1)):
-                x += s1[k]
-                times.append(round(x))
-                indices.append(j)
+            numspikes = np.random.randint(0, 20, 1)
+            s1 = np.random.uniform(50, 100, numspikes[0])
+            times.extend(list(np.round(np.cumsum(s1), 1)))
+            indices.extend(list(np.ones_like(s1) * j))
+            
+            #for k in range(len(s1)):
+            #    x += s1[k]
+            #    times.append(round(x))
+            #    indices.append(j)
         
         mu, sigma = round(1000/1), round(100/1.) 
-        num_spikes2 = round(duration/b2.ms/1000*1)
+        num_spikes2 = round(duration/ms/1000*1)
         
         #SI and PM 1Hz firing
         for j in range(num2):
@@ -218,7 +228,7 @@ class generate:
             for k in range(len(s2)):
                 x += s2[k]
                 times.append(round(x))
-                indices.append(j + (num1-1))
+                indices.append(j + num1)
         
         input_indices= b2.array(indices)
         input_times = times*ms
@@ -299,8 +309,13 @@ class visualise():
         b2.ylim(-1, Nt)
         b2.xlabel('Source neuron index')
         b2.ylabel('Target neuron index')
+        
+   ####Function to visualise synapses
+   # def syanpses(synapse):
+
 
 #Define equations
+   # start_time = t * int(v>=theta) - count*dt : second
 def equation (type):
 
     if type == 'current':
@@ -312,10 +327,8 @@ def equation (type):
         
         dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn + gl*(v-El)))
             / tau_m    
-            - int(v >= theta) * int(t < (start_time + t_spike)) * ((v - ENa) / tau_spike)
+            - int(v >= theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / tau_spike)
               : volt
-        
-        start_time = t * int(v>=theta) - count*dt : second
         
         theta_eq : volt
         
@@ -330,8 +343,6 @@ def equation (type):
         gNa : 1
         
         gK : 1
-        
-        count : 1
         
         X : meter
         

@@ -52,9 +52,13 @@ in_type = ['THA']
 in_num = [37]
 Input_Neurons = fl.generate.neurons(in_num, in_type, eqs)
 
-indices = []
-times = []
-Spike = fl.generate.spikes(25, 12, indices, times, duration)
+Spike = fl.generate.spikes(25, 12, duration)
+
+MTE_spike = fl.generate.spikes(12, 0, duration)
+MTI_spike = fl.generate.spikes(6, 0, duration)
+RI_spike = fl.generate.spikes(7, 0, duration)
+SIE_spike = fl.generate.spikes(0, 6, duration)
+PME_spike = fl.generate.spikes(0, 6, duration)
 
 ### Define Neuronal Subgroups
 neuron_group = {'L2/3E': column1[0:50], 
@@ -68,14 +72,20 @@ neuron_group = {'L2/3E': column1[0:50],
                 'RI': Input_Neurons[18:25],
                 'SIE': Input_Neurons[25:31],
                 'PME': Input_Neurons[31:37]
+#                'MTE': MTE_spike,
+#                'MTI': MTI_spike,
+#                'RI': RI_spike,
+#                'SIE': SIE_spike,
+#                'PME': PME_spike
                 }
 
 #TMS = b2.SpikeGeneratorGroup(1, [0], [300]*ms)
 ###############################################################################
 ########                          Synapses                              #######
 ###############################################################################
-Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [1], [1.4])
-all_synapses = fl.generate.model_synapses(tab1, neuron_group)
+Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [1], [0])
+
+src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
 
 ##Model of TMS activation
 #TMS_synapse = b2.Synapses(TMS, column1, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'), delay = 1.4*ms)
@@ -86,7 +96,10 @@ all_synapses = fl.generate.model_synapses(tab1, neuron_group)
 ########                         Monitors                               #######
 ###############################################################################
 statemon = b2.StateMonitor(column1, 'v', record=range(225))
+thetamon = b2.StateMonitor(column1, 'theta', record=range(225))
+#timemon = b2.StateMonitor(column1, 'start_time', record=range(225))
 spikemon = b2.SpikeMonitor(column1, variables = ['v', 't'])
+spikemon_generator = b2.SpikeMonitor(Spike, variables = ['t'])
 spikemonL23 = b2.SpikeMonitor(neuron_group['L2/3E'], variables = ['v', 't'])
 spikemonL5 = b2.SpikeMonitor(neuron_group['L5E'], variables = ['v', 't'])
 spikemonL6 = b2.SpikeMonitor(neuron_group['L6E'], variables = ['v', 't'])
@@ -115,34 +128,117 @@ index = [0, 0, 0, 0, 0]
 
 #Plot Cortex Membrane Potentials
 arraynum = time0*10
+#fig, ax = plt.subplots(6,1, figsize=(12,13), sharex=True)
+##plt.figure(figsize=(12, 5))
+##plt.subplot(2,1,1)
+#ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[25][arraynum:], 'C0', label='L3E')
+#ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[57][arraynum:], 'C1', label='L3I')
+#ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[100][arraynum:], 'C2', label='L5E')
+#ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[142][arraynum:], 'C3', label='L5I')
+#ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[175][arraynum:], 'C4', label='L6E')
+#ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[215][arraynum:], 'C5', label='L6I')
+#ax[0].set_ylabel('Membrame potential (v)')
+#ax[0].set_xlabel('Time (ms)')
+#ax[0].legend()
+#ax[1].plot(spikemon.t[index[4]:]/b2.ms, spikemon.i[index[4]:], '.k')
+#ax[1].set_ylabel('Neuron')
+#
+##### Plot Thalamus Membrane Potential ####
+#ax[2].plot(inputstatemon.t[arraynum:]/ms, inputstatemon.v[1][arraynum:], 'C6', label='MTE')
+##plt.plot(inputstatemon.t[2000:]/ms, inputstatemon.v[120][2000:], 'C4', label='PME')
+#ax[2].set_ylabel('v')
+#ax[2].legend()
+#ax[3].plot(inputspikemon.t[index[3]:]/ms, inputspikemon.i[index[3]:], '.k')
+#ax[3].set_ylabel('Neuron')
+#ax[4].plot(statemon.t[arraynum:]/ms, statemon.v[100][arraynum:], 'C3', label='L5E')
+#ax[4].plot(thetamon.t[arraynum:]/ms, thetamon.theta[100][arraynum:], 'C6', label='Theta')
+#ax[4].set_ylabel('v/theta')
+#ax[5].plot(spikemon_generator.t[:]/ms, spikemon_generator.i[:], '.k')
+#ax[5].set_xlabel('Time (ms)')
+#ax[5].set_ylabel('Neuron')
+#ax[5].plot(timemon.t[arraynum:]/ms, timemon.start_time[142][arraynum:], 'C1', label='Start Time')
+#ax[5].set_xlabel('Time (ms)')
+#ax[5].set_ylabel('start time')
+
 plt.figure(figsize=(12, 5))
-plt.subplot(2,1,1)
 plt.plot(statemon.t[arraynum:]/ms, statemon.v[25][arraynum:], 'C0', label='L3E')
 plt.plot(statemon.t[arraynum:]/ms, statemon.v[57][arraynum:], 'C1', label='L3I')
 plt.plot(statemon.t[arraynum:]/ms, statemon.v[100][arraynum:], 'C2', label='L5E')
 plt.plot(statemon.t[arraynum:]/ms, statemon.v[142][arraynum:], 'C3', label='L5I')
 plt.plot(statemon.t[arraynum:]/ms, statemon.v[175][arraynum:], 'C4', label='L6E')
 plt.plot(statemon.t[arraynum:]/ms, statemon.v[215][arraynum:], 'C5', label='L6I')
-plt.ylabel('v')
-plt.legend()
-plt.subplot(2,1,2)
-plt.plot(spikemon.t[index[4]:]/b2.ms, spikemon.i[index[4]:], '.k')
+plt.ylabel('Membrame potential (v)')
 plt.xlabel('Time (ms)')
-plt.ylabel('Neuron')
+plt.legend()
 plt.show()
 
-#### Plot Thalamus Membrane Potential ####
-plt.figure(figsize=(12,5))
-plt.subplot(2,1,1)
-plt.plot(inputstatemon.t[arraynum:]/ms, inputstatemon.v[1][arraynum:], 'C6', label='MTE')
-#plt.plot(inputstatemon.t[2000:]/ms, inputstatemon.v[120][2000:], 'C4', label='PME')
-plt.ylabel('v')
-plt.legend()
-plt.subplot(2,1,2)
-plt.plot(inputspikemon.t[index[3]:]/b2.ms, inputspikemon.i[index[3]:], '.k')
-plt.xlabel('Time (ms)')
-plt.ylabel('Neuron')
-plt.show()
+plt.savefig('neurons.png', transparent=True)
+
+######  Connectivity  ######
+src_indexes = []
+tgt_indexes = []
+
+for k in range(len(all_synapses)):
+    
+    
+    sources = all_synapses[k].i
+    targets = all_synapses[k].j
+    n_types = ['L2/3E', 'L2/3I', 'L5E', 'L5I', 'L6E', 'L6I', 'MTE', 'MTI', 'RI', 'SIE', 'PME']
+    
+    if src_group[k] == 'L2/3E':
+        sources = sources
+    if src_group[k] == 'L2/3I':
+        sources = sources + 49
+    if src_group[k] == 'L5E':
+        sources = sources + 74
+    if src_group[k] == 'L5I':
+        sources = sources + 124
+    if src_group[k] == 'L6E':
+        sources = sources + 149
+    if src_group[k] == 'L6I':
+        sources = sources + 199
+    if src_group[k] == 'MTE':
+        sources = sources + 224
+    if src_group[k] == 'MTI':
+        sources = sources + 236
+    if src_group[k] == 'RI':
+        sources = sources + 242
+    if src_group[k] == 'SIE':
+        sources = sources + 249
+    if src_group[k] == 'PME':
+        sources = sources + 260
+        
+    if tgt_group[k] == 'L2/3E':
+        targets = targets
+    if tgt_group[k] == 'L2/3I':
+        targets = targets + 49
+    if tgt_group[k] == 'L5E':
+        targets = targets + 74
+    if tgt_group[k] == 'L5I':
+        targets = targets + 124
+    if tgt_group[k] == 'L6E':
+        targets = targets + 149
+    if tgt_group[k] == 'L6I':
+        targets = targets + 199
+    if tgt_group[k] == 'MTE':
+        targets = targets + 224
+    if tgt_group[k] == 'MTI':
+        targets = targets + 236
+    if tgt_group[k] == 'RI':
+        targets = targets + 242
+    if tgt_group[k] == 'SIE':
+        targets = targets + 249
+    if tgt_group[k] == 'PME':
+        targets = targets + 260
+        
+    src_indexes.extend(sources)
+    tgt_indexes.extend(targets)
+
+plt.figure(figsize=(12, 12))
+plt.plot(src_indexes, tgt_indexes, 'k.')
+plt.fill_between([0,50],[50], facecolor='green', alpha=0.4)
+plt.fill_between([75,125],[125], facecolor='blue', alpha=0.4)
+plt.fill_between([150,200],[200], facecolor='red', alpha=0.4)
 
 ##### Histograms of average membrane potential ####
 #a = []
@@ -162,7 +258,7 @@ plt.show()
 #plt.hist(a[150:200],bins = 30) #L6E
 #plt.subplot(2,2,4).set_title('Excitatory Thalamus Membrane potential')
 #plt.hist(b,bins = 30) #L6E
-
+#
 #### Histograms of average firing rate ####
 #uniqueValues23, occurCount23 = np.unique(spikemonL23.i[index[0]:], return_counts=True)
 #frequencies23 = occurCount23/((duration/ms)/1000)
@@ -212,7 +308,7 @@ plt.show()
 #psm = axs.pcolormesh(data, cmap=viridis, rasterized=True, vmin=-0.07, vmax=-0.05)
 #fig.colorbar(psm, ax=axs)
 #plt.show()
-
+#
 #### 3D spatial plot ####
 #fig = plt.figure()
 #ax = fig.add_subplot(111, projection='3d')
