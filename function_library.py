@@ -112,8 +112,7 @@ class generate:
         dict["gK"] = g_K
         dict['X'] = X*um
         dict['Y'] = Y*um
-        dict['Z'] = Z*um
-#        dict["count"] = count        
+        dict['Z'] = Z*um      
     
         return (dict)
     
@@ -136,14 +135,39 @@ class generate:
         return neurons
     
     #column function generates a column of 225 neurons
-    #WORK IN PROGRESS
-    #How do make it generate multiple columns...
-    def column(numcol, eqs):
-        num = 225 # Number of neurons                                                                     
-        ntype = ['MPE', 'MPI', 'L5E', 'MPI', 'MPE', 'MPI']                 # Types of neurons
-        num = [50, 25, 50, 25, 50, 25]                                # Number of each type of neuron
-        newcolumn = generate.neurons(num, ntype, eqs)
-        return newcolumn
+    #num - number of columns
+    #eqs - governing equations of neuron dynamics
+    #How do I make it generate multiple columns...
+    def column(num, eqs):
+        columns_group = []
+        L3E = []
+        L3I = []
+        L5E = [] 
+        L5I = []
+        L6E = []
+        L6I = []
+        
+        for i in range(num):
+            num = 225 # Number of neurons in one column                                                                    
+            ntype = ['MPE', 'MPI', 'L5E', 'MPI', 'MPE', 'MPI']                 # Types of neurons
+            num = [50, 25, 50, 25, 50, 25]                                # Number of each type of neuron
+            newcolumn = generate.neurons(num, ntype, eqs)
+            L3E.append(newcolumn[0:50])
+            L3I.append(newcolumn[50:75])
+            L5E.append(newcolumn[75:125]) 
+            L5I.append(newcolumn[125:150])
+            L6E.append(newcolumn[150:200])
+            L6I.append(newcolumn[200:225])
+            columns_group.append(newcolumn)
+            
+        neuron_grouping = {'L2/3E': L3E,
+                           'L2/3I': L3I, 
+                           'L5E': L5E, 
+                           'L5I': L5I, 
+                           'L6E': L6E, 
+                           'L6I': L6I}
+        
+        return neuron_grouping, columns_group
 
     #synapses function generates multiple synapses
     #Inputs - array of neuron groups
@@ -182,14 +206,15 @@ class generate:
         for i, r in table.iterrows():
             src = r.loc['SourceLayer'] + re.sub('[018()]', '', r.loc['SourceCellType'])
             tgt = r.loc['TargetLayer'] + re.sub('[018()]', '', r.loc['TargetCellType'])
-            syn = b2.Synapses(neuron_group[src],
-                              neuron_group[tgt],
+            syn = b2.Synapses(neuron_group[src], neuron_group[tgt],
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
-            syn.connect(condition = 'i!=j', p=r.loc['Pmax']) 
-           # syn.connect(condition = 'sqrt((X_pre-X_post)**2 + (Y_pre-Y_post)**2) < {}*75*umeter'.format(r.loc['Radius']), p=np.random.normal(r.loc['Pmax'], r.loc['sigma'] , 1)[0]) #Probability of connecting 
-            syn.w = (r.loc['Strength']/10)  #Weights
+            #syn.connect(condition = 'i!=j', p=r.loc['Pmax']) 
+            #eqn = '{}*exp(-(X_pre-X_post)**2-(Y_pre-Y_post)**2)'.format(r.loc['Pmax'])
+            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(7.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'] ))
+            #syn.connect(condition = 'i!=j',p='{}*exp(-(X_pre-X_post)**2-(Y_pre-Y_post)**2)'.format(r.loc['Pmax'])) #Probability of connecting 
+            syn.w = (r.loc['Strength'])  #Weights (/10?)
             syn.delay = r.loc['MeanDelay']*ms
             all_synapses.append(syn)
             src_group.append(src)
@@ -208,23 +233,24 @@ class generate:
         #Thalamus 10-20Hz firing
         for j in range(num1):
             x = 0
-            numspikes = np.random.randint(0, 20, 1)
-            s1 = np.random.uniform(50, 100, numspikes[0])
+            numspikes = np.random.randint(1, 50, 1)
+            #numspikes = 50
+            s1 = np.random.uniform(1, 50, numspikes[0])
+            #spikes = np.ones(numspikes) * 50
+            if (j%2==1):
+                    s1[0] = s1[0] + 1000/numspikes[0]
             times.extend(list(np.round(np.cumsum(s1), 1)))
+            #times.extend(list(np.cumsum(spikes)))
             indices.extend(list(np.ones_like(s1) * j))
-            
-            #for k in range(len(s1)):
-            #    x += s1[k]
-            #    times.append(round(x))
-            #    indices.append(j)
         
-        mu, sigma = round(1000/1), round(100/1.) 
+#        mu, sigma = round(1000/1), round(100/1.) 
         num_spikes2 = round(duration/ms/1000*1)
         
         #SI and PM 1Hz firing
         for j in range(num2):
             x = 0
-            s2 = np.random.normal(mu, sigma, num_spikes2)
+#           s2 = np.random.normal(mu, sigma, num_spikes2)
+            s2 = np.random.uniform(1, 1000, num_spikes2)
             for k in range(len(s2)):
                 x += s2[k]
                 times.append(round(x))
@@ -553,5 +579,10 @@ def equation (type):
                 np.ln(tau2_{tr}/tau1_{tr}) : 1
         g_{tr}{st}_post = g_{tr}_syn{st} : 1 (summed)
         w : 1
+        '''
+        
+    elif type =='simple':
+        eqs = '''
+        dv/dt = -v/(10*ms) : volt
         '''
     return eqs
