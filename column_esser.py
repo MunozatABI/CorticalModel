@@ -20,9 +20,11 @@ import numpy as np
 import time
 import parameters
 from parameters import *
+import warnings
 
 b2.start_scope() #clear variables
 start = time.time() #Running time
+warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 ###############################################################################
@@ -42,30 +44,30 @@ eqs += 'g_AMPAa : 1\n g_AMPAb : 1\n ' + ''.join(['g_{}{} : 1\n'.format(r.loc['Tr
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-#Motor Cortex Column
-#MP_neurons = 225 # Number of neurons                                                                     
-#ntype = ['L3E', 'L3I', 'L5E', 'L5I', 'L6E', 'L6I']                 # Types of neurons
-#num = [50, 25, 50, 25, 50, 25]                                # Number of each type of neuron
-#column1 = fl.generate.neurons(num, ntype, eqs)
-
 num_cols = 2
-neuron_grouping, column = fl.generate.column(num_cols,eqs)
-column1 = column[0]
-column2 = column[1]
+columnsgroup = []
+columnsgroup = fl.generate.column(num_cols,eqs)
+#columnsgroup.append(column)
 
 #Input Areas - SMA, PME, THA, RN
 in_type = ['THA']
 in_num = [37]
-Input_Neurons = fl.generate.neurons(in_num, in_type, eqs)
+Input_Neurons = fl.generate.neurons(in_num, in_type, eqs, 1)
 
 Spike = fl.generate.spikes(25, 12, duration)
 
-#neuron_group = {'MTE': Input_Neurons[0:12],
-#                 'MTI': Input_Neurons[12:18],
-#                 'RI': Input_Neurons[18:25],
-#                 'SIE': Input_Neurons[25:31],
-#                 'PME': Input_Neurons[31:37]
-#                 }
+neuron_group = {'L2/3E': columnsgroup[0:50*num_cols],
+                'L2/3I': columnsgroup[50*num_cols:75*num_cols], 
+                'L5E': columnsgroup[75*num_cols:125*num_cols], 
+                'L5I': columnsgroup[125*num_cols:150*num_cols], 
+                'L6E': columnsgroup[150*num_cols:200*num_cols], 
+                'L6I': columnsgroup[200*num_cols:225*num_cols],
+                'MTE': Input_Neurons[0:12],
+                'MTI': Input_Neurons[12:18],
+                'RI': Input_Neurons[18:25],
+                'SIE': Input_Neurons[25:31],
+                'PME': Input_Neurons[31:37]
+                 }
 
 #TMS = b2.SpikeGeneratorGroup(1, [0], [300]*ms)
 ###############################################################################
@@ -73,25 +75,7 @@ Spike = fl.generate.spikes(25, 12, duration)
 ###############################################################################
 Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [1], [0])
 
-cortex_synapses = []
-#for i in range(num_cols):
-neuron_group = {'L2/3E': column[0][0:50],
-               'L2/3I': column[0][50:75], 
-               'L5E': column[0][75:125], 
-               'L5I': column[0][125:150], 
-               'L6E': column[0][150:200], 
-               'L6I': column[0][200:225],
-               'MTE': Input_Neurons[0:12],
-               'MTI': Input_Neurons[12:18],
-               'RI': Input_Neurons[18:25],
-               'SIE': Input_Neurons[25:31],
-               'PME': Input_Neurons[31:37]}
-#   neuron_group.update(cortex_group)
 src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
-cortex_synapses.append(all_synapses)
-    
-#src_group, tgt_group, input_synapses = fl.generate.model_synapses(tab1[51:69], neuron_group)
-#cortex_synapses.append(input_synapses)
 
 ##Model of TMS activation
 #TMS_synapse = b2.Synapses(TMS, column1, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'), delay = 1.4*ms)
@@ -101,9 +85,9 @@ cortex_synapses.append(all_synapses)
 ###############################################################################
 ########                         Monitors                               #######
 ###############################################################################
-statemon = b2.StateMonitor(column1, 'v', record=range(225))
-thetamon = b2.StateMonitor(column1, 'theta', record=range(225))
-spikemon = b2.SpikeMonitor(column1, variables = ['v', 't'])
+statemon = b2.StateMonitor(columnsgroup, 'v', record=range(225*num_cols))
+thetamon = b2.StateMonitor(columnsgroup, 'theta', record=range(225*num_cols))
+spikemon = b2.SpikeMonitor(columnsgroup, variables = ['v', 't'])
 spikemon_generator = b2.SpikeMonitor(Spike, variables = ['t'])
 spikemonL23 = b2.SpikeMonitor(neuron_group['L2/3E'], variables = ['v', 't'])
 spikemonL5 = b2.SpikeMonitor(neuron_group['L5E'], variables = ['v', 't'])
@@ -115,16 +99,16 @@ inputspikemon = b2.SpikeMonitor(neuron_group['MTE'], variables = ['v', 't'])
 ########                         Run Model                              #######
 ###############################################################################
 net = b2.Network(b2.collect())  #Automatically add visible objects 
-net.add(Input_synapses, cortex_synapses)           #Manually add list of synapses
+net.add(Input_synapses, all_synapses)           #Manually add list of synapses
 
 net.run(duration) #Run
 
 ###############################################################################
 ########                       Plot Graphs                              #######
 ###############################################################################
-#Only look at data after a certain time 
 time0 = 0
 index = [0, 0, 0, 0, 0]
+#Only look at data after a certain time 
 #timearrays = [spikemonL23.t, spikemonL5.t, spikemonL6.t, inputspikemon.t, spikemon.t]
 #for j in range(len(timearrays)):
 #    for i in range(len(timearrays[j])):
@@ -136,12 +120,12 @@ arraynum = time0*10
 fig, ax = plt.subplots(5,1, figsize=(12,13), sharex=True)
 #plt.figure(figsize=(12, 5))
 #plt.subplot(2,1,1)
-ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[25][arraynum:], 'C0', label='L3E')
-ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[57][arraynum:], 'C1', label='L3I')
-ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[100][arraynum:], 'C2', label='L5E')
-ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[142][arraynum:], 'C3', label='L5I')
-ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[175][arraynum:], 'C4', label='L6E')
-ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[215][arraynum:], 'C5', label='L6I')
+ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[25*num_cols][arraynum:], 'C0', label='L3E')
+ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[57*num_cols][arraynum:], 'C1', label='L3I')
+ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[100*num_cols][arraynum:], 'C2', label='L5E')
+ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[142*num_cols][arraynum:], 'C3', label='L5I')
+ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[175*num_cols][arraynum:], 'C4', label='L6E')
+ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[215*num_cols][arraynum:], 'C5', label='L6I')
 ax[0].set_ylabel('Membrame potential (v)')
 ax[0].set_xlabel('Time (ms)')
 ax[0].legend()
@@ -158,90 +142,90 @@ ax[3].set_ylabel('Neuron')
 ax[4].plot(spikemon_generator.t[index[4]:]/ms, spikemon_generator.i[index[4]:], '.k', label='SpikeGenerator')
 ax[4].set_ylabel('v')
 
-######  Connectivity  ######
-src_indexes = []
-tgt_indexes = []
+#######  Connectivity  ######
+#src_indexes = []
+#tgt_indexes = []
+#
+#for k in range(len(all_synapses)):
+#    
+#    
+#    sources = all_synapses[k].i
+#    targets = all_synapses[k].j
+#    n_types = ['L2/3E', 'L2/3I', 'L5E', 'L5I', 'L6E', 'L6I', 'MTE', 'MTI', 'RI', 'SIE', 'PME']
+#    
+#    if src_group[k] == 'L2/3E':
+#        sources = sources
+#    if src_group[k] == 'L2/3I':
+#        sources = sources + 49
+#    if src_group[k] == 'L5E':
+#        sources = sources + 74
+#    if src_group[k] == 'L5I':
+#        sources = sources + 124
+#    if src_group[k] == 'L6E':
+#        sources = sources + 149
+#    if src_group[k] == 'L6I':
+#        sources = sources + 199
+#    if src_group[k] == 'MTE':
+#        sources = sources + 224
+#    if src_group[k] == 'MTI':
+#        sources = sources + 236
+#    if src_group[k] == 'RI':
+#        sources = sources + 242
+#    if src_group[k] == 'SIE':
+#        sources = sources + 249
+#    if src_group[k] == 'PME':
+#        sources = sources + 260
+#        
+#    if tgt_group[k] == 'L2/3E':
+#        targets = targets
+#    if tgt_group[k] == 'L2/3I':
+#        targets = targets + 49
+#    if tgt_group[k] == 'L5E':
+#        targets = targets + 74
+#    if tgt_group[k] == 'L5I':
+#        targets = targets + 124
+#    if tgt_group[k] == 'L6E':
+#        targets = targets + 149
+#    if tgt_group[k] == 'L6I':
+#        targets = targets + 199
+#    if tgt_group[k] == 'MTE':
+#        targets = targets + 224
+#    if tgt_group[k] == 'MTI':
+#        targets = targets + 236
+#    if tgt_group[k] == 'RI':
+#        targets = targets + 242
+#    if tgt_group[k] == 'SIE':
+#        targets = targets + 249
+#    if tgt_group[k] == 'PME':
+#        targets = targets + 260
+#        
+#    src_indexes.extend(sources)
+#    tgt_indexes.extend(targets)
+#
+#plt.figure(figsize=(12, 12))
+#plt.plot(src_indexes, tgt_indexes, 'k.')
+#plt.fill_between([0,50],[50], facecolor='green', alpha=0.4)
+#plt.fill_between([75,125],[125], facecolor='blue', alpha=0.4)
+#plt.fill_between([150,200],[200], facecolor='red', alpha=0.4)
 
-for k in range(len(all_synapses)):
-    
-    
-    sources = all_synapses[k].i
-    targets = all_synapses[k].j
-    n_types = ['L2/3E', 'L2/3I', 'L5E', 'L5I', 'L6E', 'L6I', 'MTE', 'MTI', 'RI', 'SIE', 'PME']
-    
-    if src_group[k] == 'L2/3E':
-        sources = sources
-    if src_group[k] == 'L2/3I':
-        sources = sources + 49
-    if src_group[k] == 'L5E':
-        sources = sources + 74
-    if src_group[k] == 'L5I':
-        sources = sources + 124
-    if src_group[k] == 'L6E':
-        sources = sources + 149
-    if src_group[k] == 'L6I':
-        sources = sources + 199
-    if src_group[k] == 'MTE':
-        sources = sources + 224
-    if src_group[k] == 'MTI':
-        sources = sources + 236
-    if src_group[k] == 'RI':
-        sources = sources + 242
-    if src_group[k] == 'SIE':
-        sources = sources + 249
-    if src_group[k] == 'PME':
-        sources = sources + 260
-        
-    if tgt_group[k] == 'L2/3E':
-        targets = targets
-    if tgt_group[k] == 'L2/3I':
-        targets = targets + 49
-    if tgt_group[k] == 'L5E':
-        targets = targets + 74
-    if tgt_group[k] == 'L5I':
-        targets = targets + 124
-    if tgt_group[k] == 'L6E':
-        targets = targets + 149
-    if tgt_group[k] == 'L6I':
-        targets = targets + 199
-    if tgt_group[k] == 'MTE':
-        targets = targets + 224
-    if tgt_group[k] == 'MTI':
-        targets = targets + 236
-    if tgt_group[k] == 'RI':
-        targets = targets + 242
-    if tgt_group[k] == 'SIE':
-        targets = targets + 249
-    if tgt_group[k] == 'PME':
-        targets = targets + 260
-        
-    src_indexes.extend(sources)
-    tgt_indexes.extend(targets)
-
-plt.figure(figsize=(12, 12))
-plt.plot(src_indexes, tgt_indexes, 'k.')
-plt.fill_between([0,50],[50], facecolor='green', alpha=0.4)
-plt.fill_between([75,125],[125], facecolor='blue', alpha=0.4)
-plt.fill_between([150,200],[200], facecolor='red', alpha=0.4)
-
-#### Histograms of average membrane potential ####
-a = []
-b = []
-for i in range(225):
-    a.append(np.mean([statemon.v[i][2000:]]))
-    
-for i in range(25):
-    b.append(np.mean([inputstatemon.v[i][2000:]]))
-
-plt.figure(figsize=(12,8))
-plt.subplot(2,2,1).set_title('L2/3E Membrane potential')
-plt.hist(a[0:50],bins = 30) #L2/3E
-plt.subplot(2,2,2).set_title('L5E Membrane potential')
-plt.hist(a[75:125],bins = 30) #L5E
-plt.subplot(2,2,3).set_title('L6E Membrane potential')
-plt.hist(a[150:200],bins = 30) #L6E
-plt.subplot(2,2,4).set_title('Excitatory Thalamus Membrane potential')
-plt.hist(b,bins = 30) #L6E
+##### Histograms of average membrane potential ####
+#a = []
+#b = []
+#for i in range(225):
+#    a.append(np.mean([statemon.v[i][2000:]]))
+#    
+#for i in range(25):
+#    b.append(np.mean([inputstatemon.v[i][2000:]]))
+#
+#plt.figure(figsize=(12,8))
+#plt.subplot(2,2,1).set_title('L2/3E Membrane potential')
+#plt.hist(a[0:50],bins = 30) #L2/3E
+#plt.subplot(2,2,2).set_title('L5E Membrane potential')
+#plt.hist(a[75:125],bins = 30) #L5E
+#plt.subplot(2,2,3).set_title('L6E Membrane potential')
+#plt.hist(a[150:200],bins = 30) #L6E
+#plt.subplot(2,2,4).set_title('Excitatory Thalamus Membrane potential')
+#plt.hist(b,bins = 30) #L6E
 
 ### Histograms of average firing rate ####
 uniqueValues23, occurCount23 = np.unique(spikemonL23.i[index[0]:], return_counts=True)
@@ -300,10 +284,10 @@ plt.ylabel('frequency')
 #fig.colorbar(psm, ax=axs)
 #plt.show()
 
-#### 3D spatial plot ####
+##### 3D spatial plot ####
 #fig = plt.figure()
 #ax = fig.add_subplot(111, projection='3d')
-#ax.scatter(column1.X/b2.umetre, column1.Y/b2.umetre, column1.Z/b2.umetre, marker='o')
+#ax.scatter(columnsgroup.X/b2.umetre, columnsgroup.Y/b2.umetre, columnsgroup.Z/b2.umetre, marker='o')
 
 end = time.time()
 print('Time taken:', end-start)

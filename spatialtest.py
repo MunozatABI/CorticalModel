@@ -122,3 +122,39 @@ plt.plot(G.x, G.y,'or', alpha = 0.2)
 plt.ylabel('Spatial Plot')
 
 plt.plot(G.x[S.j[:]],G.y[S.j[:]], 'k.')
+
+######## Checkerboard
+#num = 25
+#numcol = 128  #8, 32, 128
+#
+#X_1 = []
+#Y_1 = []
+#X_2 = []
+#Y_2 = []
+#
+#Xlength = 300
+#Ylength = 300
+#
+#space = 50
+#
+#dim = (np.sqrt(numcol*2))
+#print(dim)
+#
+## Normal
+#for i in range(numcol):
+#    for n in range(num):
+#        X_1.append(Xlength/4 * (n%5) + 50*i%(dim) + (i%(dim)) * (Xlength+space))
+#        Y_1.append(Ylength/4 * np.floor(n/5) + 350*(i%(2)) + np.floor(i/dim) * 2 * (Xlength+space))
+#
+## Invert
+#for i in range(numcol):
+#    if (i%2) == 0:
+#        shift = 350
+#    else:
+#        shift = - 350
+#    for n in range(num):
+#        X_2.append(Xlength/4 * (n%5) + 50*i%(dim) + (i%(dim)) * (Xlength+space))
+#        Y_2.append(Ylength/4 * np.floor(n/5) + 350*(i%(2)) + np.floor(i/dim) * 2 * (Xlength+space)+ shift)
+#
+#plt.plot(X_1,Y_1,'k.')
+#plt.plot(X_2,Y_2,'r.')

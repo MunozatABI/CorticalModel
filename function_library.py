@@ -26,8 +26,9 @@ class generate:
     #        MPI: Primary Motor Cortex Inhibitory
     #        THA: Thalamus
     #num - an array of the number of neurons of each corresponding ntypes
+    #numcol - number of columns
     #dict - dictionary to return initial values
-    def initialise_neurons (ntype, num, dict):
+    def initialise_neurons (ntype, num, numcol, dict):
     #Defining neuron parameters
         theta_eq = []
         tau_theta = []
@@ -40,68 +41,77 @@ class generate:
         Y = []
         Z = []
  #       count = np.full((1, sum(num)), 0)
+ 
+        #Cortex neurons arranged in columns 
+        for a in range(len(ntype)):        
+             if 'L' in ntype[a]:
+                 num = [50, 25, 50, 25, 50, 25] 
         
     #Define Spatial Arrangement
         Xlength = 300
         Ylength = 300
+        space = 50
+        
+        dim = np.sqrt(numcol*2)
         
         for i in range(len(num)):
-            for j in range(num[i]): 
-                
-                if '3' or '5' or '6' in ntype[i]:
-                    n = j
-                    if j > 24:
-                        n = j - 25
-                    
-                    X.append(Xlength/4 * (n%5))
-                    Y.append(Ylength/4 * np.floor(n/5))
-                    
-                else:
-                    X.append(Xlength/np.sqrt(num[i]) * (n%(np.sqrt(num[i])))) 
-                    Y.append(Ylength/np.sqrt(num[i]) * np.floor(n/np.sqrt(num[i])))
-                    
-                if ntype[i].find('3') == 1:
-                    Z.append(1)
-                    
-                elif ntype[i].find('5') == 1:
-                    Z.append(2)
-                        
-                elif ntype[i].find('6') == 1:
-                    Z.append(3)  
-                    
-                else: 
-                    Z.append(0)
-    
-    #Define parameters according to type
-        for i in range(len(num)):
-            for j in range(num[i]): 
             
-                if ntype[i] == 'MPE' or ntype[i] == 'L3E' or ntype[i] == 'L6E':
-                    theta_eq.append(-53)
-                    tau_theta.append(2.0)
-                    tau_spike.append(1.75)
-                    t_spike.append(2.0)
-                    tau_m.append(15)
-                    g_Na.append(0.14)
-                    g_K.append(1.0)
-                    
-                elif ntype[i] == 'L5E':
-                    theta_eq.append(-53)
-                    tau_theta.append(0.5)
-                    tau_spike.append(0.6)
-                    t_spike.append(0.75)
-                    tau_m.append(13)
-                    g_Na.append(0.14)
-                    g_K.append(1.3)
-                    
-                elif ntype[i] == 'MPI' or ntype[i] == 'THA' or ntype[i] == 'L3I' or ntype[i] == 'L5I' or ntype[i] == 'L6I':
-                    theta_eq.append(-54)
-                    tau_theta.append(1.0)
-                    tau_spike.append(0.48)
-                    t_spike.append(0.75)
-                    tau_m.append(7)
-                    g_Na.append(0.2)
-                    g_K.append(1.0)
+            for j in range(numcol): 
+                
+                for k in range(num[i]):
+                
+                    if '3' or '5' or '6' in ntype[i]:
+                        n = k
+                        if k > 24:
+                            n = k - 25
+                        
+                        X.append(Xlength/4 * (n%5) + 50*j%(dim) + (j%(dim)) * (Xlength+space))
+                        Y.append(Ylength/4 * np.floor(n/5) + 350*(j%(2)) + np.floor(j/dim) * 2 * (Xlength+space))
+                        
+                    else:
+                        X.append(Xlength/np.sqrt(num[i]) * (n%(np.sqrt(num[i])))) 
+                        Y.append(Ylength/np.sqrt(num[i]) * np.floor(n/np.sqrt(num[i])))
+                        
+                    if ntype[i].find('3') == 1:
+                        Z.append(75)
+                        
+                    elif ntype[i].find('5') == 1:
+                        Z.append(150)
+                            
+                    elif ntype[i].find('6') == 1:
+                        Z.append(225)  
+                        
+                    else: 
+                        Z.append(0)
+
+    #Define parameters according to type
+
+                    if ntype[i] == 'MPE' or ntype[i] == 'L3E' or ntype[i] == 'L6E':
+                        theta_eq.append(-53)
+                        tau_theta.append(2.0)
+                        tau_spike.append(1.75)
+                        t_spike.append(2.0)
+                        tau_m.append(15)
+                        g_Na.append(0.14)
+                        g_K.append(1.0)
+                        
+                    elif ntype[i] == 'L5E':
+                        theta_eq.append(-53)
+                        tau_theta.append(0.5)
+                        tau_spike.append(0.6)
+                        t_spike.append(0.75)
+                        tau_m.append(13)
+                        g_Na.append(0.14)
+                        g_K.append(1.3)
+                        
+                    elif ntype[i] == 'MPI' or ntype[i] == 'THA' or ntype[i] == 'L3I' or ntype[i] == 'L5I' or ntype[i] == 'L6I':
+                        theta_eq.append(-54)
+                        tau_theta.append(1.0)
+                        tau_spike.append(0.48)
+                        t_spike.append(0.75)
+                        tau_m.append(7)
+                        g_Na.append(0.2)
+                        g_K.append(1.0)
                 
         dict["theta_eq"] = theta_eq*mV
         dict["tau_theta"] = tau_theta*ms
@@ -117,12 +127,14 @@ class generate:
         return (dict)
     
     #neuron function generates neurons
-    #n - array of number of neurons according to type
+    #num - array of number of neurons according to type
+    #ntype - neuron type
     #eqs - governing equations of neuron dynamics
-    def neurons(num, ntype, eqs):
+    #numcol - number of columns
+    def neurons(num, ntype, eqs, numcol):
         n = sum(num)
         initial_values = {}
-        generate.initialise_neurons(ntype, num, initial_values)
+        generate.initialise_neurons(ntype, num, numcol, initial_values)
         neurons = b2.NeuronGroup(n, eqs,
                   threshold = 'v > theta', 
                  reset = 'v = theta_eq',
@@ -135,39 +147,16 @@ class generate:
         return neurons
     
     #column function generates a column of 225 neurons
-    #num - number of columns
+    #numcol - number of columns
     #eqs - governing equations of neuron dynamics
-    #How do I make it generate multiple columns...
-    def column(num, eqs):
-        columns_group = []
-        L3E = []
-        L3I = []
-        L5E = [] 
-        L5I = []
-        L6E = []
-        L6I = []
-        
-        for i in range(num):
-            num = 225 # Number of neurons in one column                                                                    
-            ntype = ['MPE', 'MPI', 'L5E', 'MPI', 'MPE', 'MPI']                 # Types of neurons
-            num = [50, 25, 50, 25, 50, 25]                                # Number of each type of neuron
-            newcolumn = generate.neurons(num, ntype, eqs)
-            L3E.append(newcolumn[0:50])
-            L3I.append(newcolumn[50:75])
-            L5E.append(newcolumn[75:125]) 
-            L5I.append(newcolumn[125:150])
-            L6E.append(newcolumn[150:200])
-            L6I.append(newcolumn[200:225])
-            columns_group.append(newcolumn)
+    def column(numcol, eqs):
+        numcol = 2                                                            
+        ntype = ['L3E', 'L3I', 'L5E', 'L5I', 'L6E', 'L6I']                 # Types of neurons
+        num = [50, 25, 50, 25, 50, 25]                                # Number of each type of neuron in each column
+        new_num = [i*numcol for i in num]
+        columns = generate.neurons(new_num, ntype, eqs, numcol)
             
-        neuron_grouping = {'L2/3E': L3E,
-                           'L2/3I': L3I, 
-                           'L5E': L5E, 
-                           'L5I': L5I, 
-                           'L6E': L6E, 
-                           'L6I': L6I}
-        
-        return neuron_grouping, columns_group
+        return columns
 
     #synapses function generates multiple synapses
     #Inputs - array of neuron groups
@@ -210,11 +199,9 @@ class generate:
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
-            #syn.connect(condition = 'i!=j', p=r.loc['Pmax']) 
-            #eqn = '{}*exp(-(X_pre-X_post)**2-(Y_pre-Y_post)**2)'.format(r.loc['Pmax'])
-            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(7.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'] ))
-            #syn.connect(condition = 'i!=j',p='{}*exp(-(X_pre-X_post)**2-(Y_pre-Y_post)**2)'.format(r.loc['Pmax'])) #Probability of connecting 
-            syn.w = (r.loc['Strength'])  #Weights (/10?)
+            #syn.connect(condition = 'i!=j', p=1.0) 
+            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(75*{})**2))'.format(r.loc['Pmax'],r.loc['Radius']))
+            syn.w = (r.loc['Strength']/5)  #Weights (/10?)
             syn.delay = r.loc['MeanDelay']*ms
             all_synapses.append(syn)
             src_group.append(src)
@@ -242,7 +229,6 @@ class generate:
             times.extend(list(np.round(np.cumsum(s1), 1)))
             #times.extend(list(np.cumsum(spikes)))
             indices.extend(list(np.ones_like(s1) * j))
-        
 #        mu, sigma = round(1000/1), round(100/1.) 
         num_spikes2 = round(duration/ms/1000*1)
         
