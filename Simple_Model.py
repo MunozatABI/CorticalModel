@@ -35,14 +35,14 @@ eqs += 'g_AMPA : 1\n g_AMPA_2 :1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitter
 ########                      Create Neurons                            #######
 ###############################################################################
 #initialise neurons
-neuron_type = ['MPE', 'L5E', 'MPI']
+neuron_type = ['L3E', 'L5E', 'THA']
 neuron_num = [1, 1, 1]
-Neurons = fl.generate.neurons(neuron_num, neuron_type, eqs)
+Neurons = fl.generate.neurons(neuron_num, neuron_type, eqs, 1, 0)
 
 #initialise input (thalamic) neurons
 in_type = ['THA']
 in_num = [2]
-Input_Neurons = fl.generate.neurons(in_num, in_type, eqs)
+Input_Neurons = fl.generate.neurons(in_num, in_type, eqs, 1, 0)
 
 #Spike definitions for input neurons
 Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms) 

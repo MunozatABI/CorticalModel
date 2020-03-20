@@ -30,7 +30,7 @@ gpeak_NMDA = 0.1
 #Constants
 EK = -70*mV               # Potassium
 ENa = 40*mV               # Sodium
-El = -10.6 * mV
+El = -16.6 * mV          # 10.6mV
 gl = 0.33
 
 #Constant in threshold equation
@@ -50,7 +50,7 @@ C = 0.85
 #EK = -90*mV  
 #ENa = 50*mV
 
-###Constants from Neurodynex
+###Constants from Neurodynex #https://neuronaldynamics.epfl.ch/online/index.html
 ## neuron parameters
 #El = 10.6 * b2.mV
 #EK = -12 * b2.mV

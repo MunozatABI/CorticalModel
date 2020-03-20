@@ -28,7 +28,7 @@ class generate:
     #num - an array of the number of neurons of each corresponding ntypes
     #numcol - number of columns
     #dict - dictionary to return initial values
-    def initialise_neurons (ntype, num, numcol, dict):
+    def initialise_neurons (ntype, num, numcol, dict, pref):
     #Defining neuron parameters
         theta_eq = []
         tau_theta = []
@@ -65,8 +65,19 @@ class generate:
                         if k > 24:
                             n = k - 25
                         
-                        X.append(Xlength/4 * (n%5) + 50*j%(dim) + (j%(dim)) * (Xlength+space))
-                        Y.append(Ylength/4 * np.floor(n/5) + 350*(j%(2)) + np.floor(j/dim) * 2 * (Xlength+space))
+                        if pref == 0:
+                            X.append(Xlength/4 * (n%5) + 50*j%(dim) + (j%(dim)) * (Xlength+space))
+                            Y.append(Ylength/4 * np.floor(n/5) + 350*(j%(2)) + np.floor(j/dim) * 2 * (Xlength+space))
+                        
+                        elif pref == 180:
+                                
+                            if (j%2) == 0:
+                                shift = 350
+                            else:
+                                shift = - 350
+                                
+                            X.append(Xlength/4 * (n%5) + 50*j%(dim) + (j%(dim)) * (Xlength+space))
+                            Y.append(Ylength/4 * np.floor(n/5) + 350*(j%(2)) + np.floor(j/dim) * 2 * (Xlength+space)+ shift)
                         
                     else:
                         X.append(Xlength/np.sqrt(num[i]) * (n%(np.sqrt(num[i])))) 
@@ -131,10 +142,10 @@ class generate:
     #ntype - neuron type
     #eqs - governing equations of neuron dynamics
     #numcol - number of columns
-    def neurons(num, ntype, eqs, numcol):
+    def neurons(num, ntype, eqs, numcol, pref):
         n = sum(num)
         initial_values = {}
-        generate.initialise_neurons(ntype, num, numcol, initial_values)
+        generate.initialise_neurons(ntype, num, numcol, initial_values, pref)
         neurons = b2.NeuronGroup(n, eqs,
                   threshold = 'v > theta', 
                  reset = 'v = theta_eq',
@@ -149,12 +160,11 @@ class generate:
     #column function generates a column of 225 neurons
     #numcol - number of columns
     #eqs - governing equations of neuron dynamics
-    def column(numcol, eqs):
-        numcol = 2                                                            
+    def column(numcol, eqs, pref):                                                          
         ntype = ['L3E', 'L3I', 'L5E', 'L5I', 'L6E', 'L6I']                 # Types of neurons
         num = [50, 25, 50, 25, 50, 25]                                # Number of each type of neuron in each column
         new_num = [i*numcol for i in num]
-        columns = generate.neurons(new_num, ntype, eqs, numcol)
+        columns = generate.neurons(new_num, ntype, eqs, numcol, pref)
             
         return columns
 
@@ -193,15 +203,15 @@ class generate:
         tgt_group=[]
         eqs_syn= equation('synapse')
         for i, r in table.iterrows():
-            src = r.loc['SourceLayer'] + re.sub('[018()]', '', r.loc['SourceCellType'])
-            tgt = r.loc['TargetLayer'] + re.sub('[018()]', '', r.loc['TargetCellType'])
+            src = r.loc['SourceLayer'] + re.sub('[()]', '', r.loc['SourceCellType'])
+            tgt = r.loc['TargetLayer'] + re.sub('[()]', '', r.loc['TargetCellType'])
             syn = b2.Synapses(neuron_group[src], neuron_group[tgt],
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
             #syn.connect(condition = 'i!=j', p=1.0) 
-            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(75*{})**2))'.format(r.loc['Pmax'],r.loc['Radius']))
-            syn.w = (r.loc['Strength']/5)  #Weights (/10?)
+            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*um*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
+            syn.w = (r.loc['Strength']/6)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             all_synapses.append(syn)
             src_group.append(src)
@@ -221,15 +231,16 @@ class generate:
         for j in range(num1):
             x = 0
             numspikes = np.random.randint(1, 50, 1)
-            #numspikes = 50
+#            numspikes = [1]
             s1 = np.random.uniform(1, 50, numspikes[0])
+#            s1 = ([150])
             #spikes = np.ones(numspikes) * 50
+            #add in asynchrony
             if (j%2==1):
                     s1[0] = s1[0] + 1000/numspikes[0]
             times.extend(list(np.round(np.cumsum(s1), 1)))
-            #times.extend(list(np.cumsum(spikes)))
             indices.extend(list(np.ones_like(s1) * j))
-#        mu, sigma = round(1000/1), round(100/1.) 
+        #mu, sigma = round(1000/1), round(100/1.) 
         num_spikes2 = round(duration/ms/1000*1)
         
         #SI and PM 1Hz firing
