@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore')
 tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 
 ##Simulation Parameters
-duration = 500*ms     # Total simulation time
+duration = 1000*ms     # Total simulation time
 sim_dt = 0.1*ms           # Integrator/sampling step
 
 ###############################################################################
@@ -44,7 +44,7 @@ eqs += 'g_AMPAa : 1\n g_AMPAb : 1\n g_AMPAc : 1\n' + ''.join(['g_{}{} : 1\n'.for
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-num_cols = 2 #2, 8, 32, 64
+num_cols = 32 #2, 8, 32, 64
 columnsgroup_0 = []
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
 columnsgroup_180 = fl.generate.column(num_cols,eqs,180)
@@ -80,7 +80,7 @@ neuron_group = {'L2/3E0': columnsgroup_0[0:50*num_cols],
                 'PMSI': Input_Neurons[50*num_cols:75*num_cols]
                  }
 #
-TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
+#TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
 ###############################################################################
 ########                          Synapses                              #######
 ###############################################################################
@@ -89,11 +89,11 @@ Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [
 src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
 
 #Model of TMS activation
-TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
+#TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
 #TMS_synapse_180 = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
-TMS_synapse_0.connect(p=1)
+#TMS_synapse_0.connect(p=1)
 #TMS_synapse_180.connect(p=1)
-TMS_synapse_0.w = 1
+#TMS_synapse_0.w = 1
 #TMS_synapse_180.w = 1
 
 ###############################################################################
@@ -292,12 +292,12 @@ plt.ylabel('frequency')
 #                       bottom(np.linspace(0, 1, 128))))
 #colours = mpl.colors.ListedColormap(newcolours, name='OrangeBlue')
 #
-#rdgy = cm.get_cmap('RdGy', 256)
+#rdgy = cm.get_cmap('jet', 256)
 ##
 ###Colourmap of Cortex
 #data = statemon.v[0:50*num_cols]
 #fig, axs = plt.subplots(figsize=(10, 4), constrained_layout=True)
-#psm = axs.pcolormesh(data, cmap=rdgy, rasterized=True, vmin=-0.07, vmax=-0.05)
+#psm = axs.pcolormesh(data, cmap=jet, rasterized=True, vmin=-0.07, vmax=-0.05)
 #fig.colorbar(psm, ax=axs)
 #plt.show()
 #
@@ -309,12 +309,12 @@ plt.ylabel('frequency')
 #plt.show()
 
 ##### 3D spatial plot ####
-#fig = plt.figure(figsize=(10,8))
-#ax = fig.add_subplot(111, projection='3d')
-#ax.scatter(columnsgroup_0.X/b2.umetre, columnsgroup_0.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='o')
-#ax.scatter(columnsgroup_180.X/b2.umetre, columnsgroup_180.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='x')
-#plt.xlabel("Distance (um)")
-#plt.ylabel("Distance (um)")
+fig = plt.figure(figsize=(10,8))
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(columnsgroup_0.X/b2.umetre, columnsgroup_0.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='o')
+ax.scatter(columnsgroup_180.X/b2.umetre, columnsgroup_180.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='x')
+plt.xlabel("Distance (um)")
+plt.ylabel("Distance (um)")
 
 end = time.time()
 print('Time taken:', end-start)
