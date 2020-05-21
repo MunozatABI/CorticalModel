@@ -84,13 +84,13 @@ class generate:
                         Y.append(Ylength/np.sqrt(num[i]) * np.floor(n/np.sqrt(num[i])))
                         
                     if ntype[i].find('3') == 1:
-                        Z.append(75)
+                        Z.append(225)
                         
                     elif ntype[i].find('5') == 1:
                         Z.append(150)
                             
                     elif ntype[i].find('6') == 1:
-                        Z.append(225)  
+                        Z.append(75)  
                         
                     else: 
                         Z.append(0)
@@ -148,12 +148,13 @@ class generate:
         generate.initialise_neurons(ntype, num, numcol, initial_values, pref)
         neurons = b2.NeuronGroup(n, eqs,
                   threshold = 'v > theta', 
-                 reset = 'v = theta_eq',
+                  reset = 'v = theta_eq',
 #                 events={'on_spike': 'v > theta'},
                   method = 'euler',
                   refractory = 'v > theta')
         neurons.set_states(initial_values)
-        neurons.v = neurons.theta_eq #initialise resting potential
+        neurons.v = -70*b2.mV
+        #neurons.v = neurons.theta_eq #initialise resting potential
 #        neurons.run_on_event('on_spike', 'count = count + 1')
         return neurons
     
@@ -209,10 +210,12 @@ class generate:
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
-            #syn.connect(condition = 'i!=j', p=1.0) 
-            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*um*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
+            syn.connect(condition = 'i!=j', p=1.0) 
+            #syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2  + (Z_pre-Z_post)**2)/(2*(37.5*um*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
             syn.w = (r.loc['Strength']/6)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
+            #post.delay = '{}*ms'.format(,r.loc['VCond'])
+            #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
             all_synapses.append(syn)
             src_group.append(src)
             tgt_group.append(tgt)
@@ -230,9 +233,9 @@ class generate:
         #Thalamus 10-20Hz firing
         for j in range(num1):
             x = 0
-            numspikes = np.random.randint(1, 50, 1)
+            numspikes = np.random.randint(10*(duration/ms/1000), 20*(duration/ms/1000), 1)
 #            numspikes = [1]
-            s1 = np.random.uniform(1, 50, numspikes[0])
+            s1 = np.random.uniform(50, 100, numspikes[0])
 #            s1 = ([150])
             #spikes = np.ones(numspikes) * 50
             #add in asynchrony
@@ -241,8 +244,8 @@ class generate:
             times.extend(list(np.round(np.cumsum(s1), 1)))
             indices.extend(list(np.ones_like(s1) * j))
         #mu, sigma = round(1000/1), round(100/1.) 
-        num_spikes2 = round(duration/ms/1000*1)
         
+        num_spikes2 = round(1*duration/ms/1000)   
         #SI and PM 1Hz firing
         for j in range(num2):
             x = 0
