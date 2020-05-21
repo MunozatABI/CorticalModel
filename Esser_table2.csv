@@ -1,0 +1,2 @@
+SourceArea SourceLayer SourceCellType TargetArea TargetLayer TargetCellType Transmitter Pmax sigma Radius Strength MeanDelay VCond
+PM PM E MP L2/3 E(0) AMPA 1 7.5 8 1 6 0

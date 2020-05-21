@@ -30,7 +30,7 @@ gpeak_NMDA = 0.1
 #Constants
 EK = -70*mV               # Potassium
 ENa = 40*mV               # Sodium
-El = -16.6 * mV          # 10.6mV
+El = -10.6 * mV          # 10.6mV
 gl = 0.33
 
 #Constant in threshold equation
