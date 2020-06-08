@@ -28,9 +28,9 @@ Erev_NMDA = 0*mV
 gpeak_NMDA = 0.1
 
 #Constants
-EK = -70*mV               # Potassium
-ENa = 40*mV               # Sodium
-El = -10.6 * mV          # 10.6mV
+EK = -80*mV               # Potassium
+ENa = 60*mV               # Sodium #50
+El = -20* mV          # Leak 10.6mV
 gl = 0.33
 
 #Constant in threshold equation

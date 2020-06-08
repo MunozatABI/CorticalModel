@@ -1,6 +1,5 @@
 5# -*- coding: utf-8 -*-
-"""Column_Esser.ipynb
-In this script, I am aiming to make a column of 225 Neurons
+"""Column_Esser.py
 """
 ###############################################################################
 ########                   Import Libraries                             #######
@@ -29,16 +28,13 @@ warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 ###############################################################################
-tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
-tab1 = pd.read_csv('Esser_table2.csv', nrows = 2, delimiter=' ', index_col=False) #Define input table
+tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+#tab1 = pd.read_csv('Esser_table2.csv', nrows = 2, delimiter=' ', index_col=False) #Define input table
 
 ##Simulation Parameters
 duration = 1000*ms     # Total simulation time
-<<<<<<< HEAD
 sim_dt = 0.1*ms           # Integrator/sampling step
-=======
-sim_dt = 0.001*ms           # Integrator/sampling step
->>>>>>> 278fd1ccdd432296e12bd16d3a631ff5c7b6219c
+#sim_dt = 0.001*ms           # Integrator/sampling step
 
 ###############################################################################
 ########                     Neuron Equations                           #######
@@ -50,11 +46,7 @@ eqs += 'g_AMPAa : 1\n g_AMPAb : 1\n g_AMPAc : 1\n' + ''.join(['g_{}{} : 1\n'.for
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-<<<<<<< HEAD
-num_cols = 32 #2, 8, 32, 64
-=======
-num_cols = 8 #2, 8, 32, 64
->>>>>>> 278fd1ccdd432296e12bd16d3a631ff5c7b6219c
+num_cols = 128 #2, 8, 32, 128
 columnsgroup_0 = []
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
 columnsgroup_180 = fl.generate.column(num_cols,eqs,180)
@@ -86,15 +78,15 @@ neuron_group = {'L2/3E0': columnsgroup_0[0:50*num_cols],
                 'RI': Input_Neurons[36*num_cols:50*num_cols],
                 'THA':Input_Neurons[0:50*num_cols],
                 'SIE': Input_Neurons[50*num_cols:62*num_cols],
-                'PME': Input_Neurons[62*num_cols:75*num_cols],
+                'PME': Input_Neurons[62*num_cols:75*num_cols], 
                 'PMSI': Input_Neurons[50*num_cols:75*num_cols]
                  }
-#
-<<<<<<< HEAD
-#TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
-=======
-# TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
->>>>>>> 278fd1ccdd432296e12bd16d3a631ff5c7b6219c
+
+
+b2.SpikeGeneratorGroup(1, [0], [250]*ms)
+
+TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
+
 ###############################################################################
 ########                          Synapses                              #######
 ###############################################################################
@@ -102,23 +94,13 @@ Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [
 
 src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
 
-<<<<<<< HEAD
 #Model of TMS activation
-#TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
-#TMS_synapse_180 = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
-#TMS_synapse_0.connect(p=1)
-#TMS_synapse_180.connect(p=1)
-#TMS_synapse_0.w = 1
-#TMS_synapse_180.w = 1
-=======
-# #Model of TMS activation
-# TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
-# TMS_synapse_180 = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
-# TMS_synapse_0.connect(p=0.5)
-# TMS_synapse_180.connect(p=0.5)
-# TMS_synapse_0.w = 1
-# TMS_synapse_180.w = 1
->>>>>>> 278fd1ccdd432296e12bd16d3a631ff5c7b6219c
+TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
+TMS_synapse_180 = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
+TMS_synapse_0.connect(p=0.5)
+TMS_synapse_180.connect(p=0.5)
+TMS_synapse_0.w = 1
+TMS_synapse_180.w = 1
 
 ###############################################################################
 ########                         Monitors                               #######
@@ -184,24 +166,24 @@ ax[3].set_ylabel('Neuron')
 ax[4].plot(inputspikemon_PS.t[index[4]:]/ms, inputspikemon_PS.i[index[4]:], '.k')
 ax[4].set_ylabel('v')
 
-###Extra Plots###
-L23 = sum(statemon.v[0:50*num_cols])/(50*num_cols)
-L5 = sum(statemon.v[75*num_cols:125*num_cols])/(50*num_cols)
-L6 = sum(statemon.v[150*num_cols:200*num_cols])/(50*num_cols)
+####Extra Plots###
+#L23 = sum(statemon.v[0:50*num_cols])/(50*num_cols)
+#L5 = sum(statemon.v[75*num_cols:125*num_cols])/(50*num_cols)
+#L6 = sum(statemon.v[150*num_cols:200*num_cols])/(50*num_cols)
+#
+#Iwave = (L23 + L5 + L6)/3
+#plt.figure()
+#plt.plot(Iwave)
 
-Iwave = (L23 + L5 + L6)/3
-plt.figure()
-plt.plot(Iwave)
-
-# fig, ax = plt.subplots(6,1, figsize=(12,13), sharex=True)
-# ax[0].plot(statemon.t[2400:3500]/ms, statemon.v[25*num_cols][2400:3500], 'C0', label='L3E')
-# ax[1].plot(statemon.t[2400:3500]/ms, statemon.v[57*num_cols][2400:3500], 'C1', label='L3I')
-# ax[2].plot(statemon.t[2400:3500]/ms, statemon.v[100*num_cols][2400:3500], 'C2', label='L5E')
-# ax[3].plot(statemon.t[2400:3500]/ms, statemon.v[142*num_cols][2400:3500], 'C3', label='L5I')
-# ax[4].plot(statemon.t[2400:3500]/ms, statemon.v[175*num_cols][2400:3500], 'C4', label='L6E')
-# ax[5].plot(statemon.t[2400:3500]/ms, statemon.v[215*num_cols][2400:3500], 'C5', label='L6I')
-# ax[2].set_ylabel('Membrame potential (v)')
-# ax[5].set_xlabel('Time (ms)')
+#fig, ax = plt.subplots(6,1, figsize=(12,13), sharex=True)
+#ax[0].plot(statemon.t[2400:3500]/ms, statemon.v[25*num_cols][2400:3500], 'C0', label='L3E')
+#ax[1].plot(statemon.t[2400:3500]/ms, statemon.v[57*num_cols][2400:3500], 'C1', label='L3I')
+#ax[2].plot(statemon.t[2400:3500]/ms, statemon.v[100*num_cols][2400:3500], 'C2', label='L5E')
+#ax[3].plot(statemon.t[2400:3500]/ms, statemon.v[142*num_cols][2400:3500], 'C3', label='L5I')
+#ax[4].plot(statemon.t[2400:3500]/ms, statemon.v[175*num_cols][2400:3500], 'C4', label='L6E')
+#ax[5].plot(statemon.t[2400:3500]/ms, statemon.v[215*num_cols][2400:3500], 'C5', label='L6I')
+#ax[2].set_ylabel('Membrame potential (v)')
+#ax[5].set_xlabel('Time (ms)')
 
 fig, ax = plt.subplots(6,1, figsize=(12,13), sharex=True, sharey=True)
 ax[0].plot(statemon.t[:]/ms, statemon.v[25*num_cols][:], 'C2', label='L3E')
@@ -213,9 +195,9 @@ ax[5].plot(statemon.t[:]/ms, statemon.v[215*num_cols][:], 'C3', label='L6I')
 plt.ylim(-0.08, 0.02)
 ax[2].set_ylabel('Membrame potential (v)')
 ax[5].set_xlabel('Time (ms)')
-
-plt.figure()
-plt.plot(inputstatemon.t[:]/ms, inputstatemon.v[53*num_cols][:], 'C5', label='L6I')
+#
+#plt.figure()
+#plt.plot(inputstatemon.t[:]/ms, inputstatemon.v[53*num_cols][:], 'C5', label='L6I')
 
 #######  Connectivity  ######
 #src_indexes = []
@@ -342,35 +324,34 @@ print(L6I_firing)
 
 total_firing = np.concatenate([spikemonL23E.t, spikemonL23I.t, spikemonL5E.t, spikemonL5I.t, spikemonL6E.t, spikemonL6I.t])
 
-#Thalamus
-uniqueValues_input, occurCount_input = np.unique(inputspikemon_TH.i[index[3]:], return_counts=True)
-frequencies_input = (occurCount_input/((duration/ms)/1000))
-plt.subplot(2,2,4)
-plt.gca().set_title('Thalamus Average Firing')
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Number of neurons')
-plt.hist(frequencies_input,bins = 30, range = (0,20))
+##Thalamus
+#uniqueValues_input, occurCount_input = np.unique(inputspikemon_TH.i[index[3]:], return_counts=True)
+#frequencies_input = (occurCount_input/((duration/ms)/1000))
+#plt.subplot(2,2,4)
+#plt.gca().set_title('Thalamus Average Firing')
+#plt.xlabel('Frequency (Hz)')
+#plt.ylabel('Number of neurons')
+#plt.hist(frequencies_input,bins = 30, range = (0,20))
+#
+#plt.figure(figsize=(6,4))
+#plt.hist(total_firing,bins = 1000)
+#plt.xlabel('time')
+#plt.ylabel('frequency')
+#plt.savefig('Plot.png', transparent=True)
 
-plt.figure(figsize=(6,4))
-plt.hist(total_firing,bins = 1000)
-plt.xlabel('time')
-plt.ylabel('frequency')
-plt.savefig('Plot.png', transparent=True)
-
-#### Colourmaps ####
+### Colourmaps ####
 # top = cm.get_cmap('Oranges_r', 128)
 # bottom = cm.get_cmap('Blues', 128)
 # newcolours = np.vstack((top(np.linspace(0, 1, 128)),
 #                       bottom(np.linspace(0, 1, 128))))
-<<<<<<< HEAD
 #colours = mpl.colors.ListedColormap(newcolours, name='OrangeBlue')
 #
 #rdgy = cm.get_cmap('jet', 256)
 ##
 ###Colourmap of Cortex
-#data = statemon.v[0:50*num_cols]
+#data = statemon.v[0:50]
 #fig, axs = plt.subplots(figsize=(10, 4), constrained_layout=True)
-#psm = axs.pcolormesh(data, cmap=jet, rasterized=True, vmin=-0.07, vmax=-0.05)
+#psm = axs.pcolormesh(data, cmap=rdgy, rasterized=True, vmin=-0.07, vmax=-0.05)
 #fig.colorbar(psm, ax=axs)
 #plt.show()
 #
@@ -380,7 +361,6 @@ plt.savefig('Plot.png', transparent=True)
 #psm = axs.pcolormesh(data, cmap=viridis, rasterized=True, vmin=-0.07, vmax=-0.05)
 #fig.colorbar(psm, ax=axs)
 #plt.show()
-=======
 # colours = mpl.colors.ListedColormap(newcolours, name='OrangeBlue')
 
 # rdgy = cm.get_cmap('jet', 256)
@@ -398,15 +378,14 @@ plt.savefig('Plot.png', transparent=True)
 # psm = axs.pcolormesh(data, cmap=viridis, rasterized=True, vmin=-0.07, vmax=-0.05)
 # fig.colorbar(psm, ax=axs)
 # plt.show()
->>>>>>> 278fd1ccdd432296e12bd16d3a631ff5c7b6219c
 
-##### 3D spatial plot ####
-fig = plt.figure(figsize=(10,8))
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(columnsgroup_0.X/b2.umetre, columnsgroup_0.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='o')
-ax.scatter(columnsgroup_180.X/b2.umetre, columnsgroup_180.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='x')
-plt.xlabel("Distance (um)")
-plt.ylabel("Distance (um)")
+####### 3D spatial plot ####
+#fig = plt.figure(figsize=(10,8))
+#ax = fig.add_subplot(111, projection='3d')
+#ax.scatter(columnsgroup_0.X/b2.umetre, columnsgroup_0.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='o')
+#ax.scatter(columnsgroup_180.X/b2.umetre, columnsgroup_180.Y/b2.umetre, columnsgroup_0.Z/b2.umetre, marker='x')
+#plt.xlabel("Distance (um)")
+#plt.ylabel("Distance (um)")
 
 end = time.time()
 print('Time taken:', end-start)

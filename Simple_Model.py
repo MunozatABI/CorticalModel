@@ -26,7 +26,7 @@ simulation_time = 1000     # Total simulation time
 ###############################################################################
 ########                     Neuron Equations                           #######
 ###############################################################################
-Transmitters = ['GABAA', 'AMPA', 'GABAB']
+Transmitters = ['GABAA', 'GABAA', 'GABAA']
 eqs = fl.equation('current')
 eqs += 'I_syn = (v - Erev_AMPA) * g_AMPA + (v - Erev_AMPA) * g_AMPA_2 +' + '+'.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
 eqs += 'g_AMPA : 1\n g_AMPA_2 :1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitters[i], i) for i in range(len(Transmitters))])
@@ -35,10 +35,9 @@ eqs += 'g_AMPA : 1\n g_AMPA_2 :1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitter
 ########                      Create Neurons                            #######
 ###############################################################################
 #initialise neurons
-neuron_type = ['L3E', 'L5E', 'THA']
+neuron_type = ['MPE', 'MPE', 'MPI']
 neuron_num = [1, 1, 1]
 Neurons = fl.generate.neurons(neuron_num, neuron_type, eqs, 1, 0)
-
 #initialise input (thalamic) neurons
 in_type = ['THA']
 in_num = [2]
@@ -81,19 +80,19 @@ synapses_group = []
 synapses_group.append(Input_syn1)
 synapses_group.append(Input_syn2)
 
-Inputs = [Spike1] ### Define Inputs here ###
-Targets = [K]  ### Define Targets here ###
-prob = [1]
-weight = [0.1]
-delay = [1.4]
+Inputs = [A, A, H] ### Define Inputs here ###
+Targets = [K, G, G]  ### Define Targets here ###
+prob = [1, 1, 1]
+weight = [0.08, 0.08, 0.08]
+delay = [1.4, 1.4, 1.4]
 
 synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, prob, weight, delay, S=True)
 ###############################################################################
 ########                         Monitors                               #######
 ###############################################################################
 #Monitoring membrane potentials
-#M1 = b2.StateMonitor(Inputs[0], ['v', 'theta'], record=True)
-M2 = b2.StateMonitor(Targets[0], 'v', record=True)
+M1 = b2.StateMonitor(Inputs[1], ['v', 'theta'], record=True)
+M2 = b2.StateMonitor(Targets[1], 'v', record=True)
 #M3 = b2.StateMonitor(Targets[1], 'v', record=True)
 SpikeMon1 = b2.SpikeMonitor(Spike1)
 SpikeMon = b2.SpikeMonitor(A)
@@ -111,9 +110,14 @@ net.run(simulation_time*ms) #Run simulation
 ########                       Plot Graphs                              #######
 ###############################################################################
 #Plot Membrane Potential
+Monitors = [M1]
+Labels = ['Input Neuron 1']
+fl.visualise.membrane_voltage(Labels, Monitors, [0])
+
 Monitors = [M2]
 Labels = ['Target Neuron 1']
 fl.visualise.membrane_voltage(Labels, Monitors, [0])
+
 #b2.plot(M1.t/b2.ms, M1.theta[0], 'C4-')
 #b2.plot(SpikeMon.t/b2.ms, SpikeMon.i, '.k') #Plot spiking
 
