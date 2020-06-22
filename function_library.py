@@ -148,12 +148,12 @@ class generate:
         generate.initialise_neurons(ntype, num, numcol, initial_values, pref)
         neurons = b2.NeuronGroup(n, eqs,
                   threshold = 'v > theta', 
-                  reset = 'v = theta_eq',
+                  reset = 'v = theta',
 #                 events={'on_spike': 'v > theta'},
-                  method = 'euler',
-                  refractory = 'v > theta')
+                  method = 'rk4',
+                  refractory = 2*ms)
         neurons.set_states(initial_values)
-        neurons.v = -70*b2.mV
+        neurons.v = -65*mV
         #neurons.v = neurons.theta_eq #initialise resting potential
 #        neurons.run_on_event('on_spike', 'count = count + 1')
         return neurons
@@ -210,9 +210,8 @@ class generate:
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
-            #syn.connect(condition = 'i!=j', p=1.0) 
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2  + (Z_pre-Z_post)**2)/(2*(30*um*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
-            syn.w = (r.loc['Strength']/20)  #Weights scaled to match Iriki et al., 1991
+            syn.w = (r.loc['Strength']/10)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
@@ -349,11 +348,11 @@ def equation (type):
         eqs = '''
         dtheta/dt = (-1*(theta - theta_eq)
                      + C * (v - theta_eq)) / tau_theta
-                     : volt (unless refractory)
+                     : volt
         
-        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn + gl*(v-El)))
-            / (tau_m/10)   
-            - int(v >= theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / tau_spike)
+        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
+            / (tau_m/5)   
+            - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
               : volt
         
         theta_eq : volt
@@ -384,20 +383,11 @@ def equation (type):
                      + C * (v - theta_eq)) / tau_theta
                      : volt
         
-        dv/dt = (gl*(v-El) - 
-                 gNa*m**3*h*(v-ENa) - 
-                 gK*n**4*(v-EK))/Cm: volt
+        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - gl*(v-El) - I_syn))
+            / (tau_m/5)   
+            - int(v >= theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike/2))
+              : volt
         
-        alphah = .07*exp(-.05*v/mV)/ms    : Hz
-        alpham = .1*(25*mV-v)/(exp(2.5-.1*v/mV)-1)/mV/ms : Hz
-        alphan = .01*(10*mV-v)/(exp(1-.1*v/mV)-1)/mV/ms : Hz
-        betah = 1./(1+exp(3.-.1*v/mV))/ms : Hz
-        betam = 4*exp(-.0556*v/mV)/ms : Hz
-        betan = .125*exp(-.0125*v/mV)/ms : Hz
-        dh/dt = alphah*(1-h)-betah*h : 1
-        dm/dt = alpham*(1-m)-betam*m : 1
-        dn/dt = alphan*(1-n)-betan*n : 1
-
         theta_eq : volt
         
         tau_theta : second
@@ -412,14 +402,13 @@ def equation (type):
         
         gK : 1
         
-        count : 1
-        
         X : meter
         
         Y : meter
         
         Z : meter
         '''
+        
         
           
     elif type == 'I_int':
@@ -486,20 +475,16 @@ def equation (type):
                      + C * (v - theta_eq)) / tau_theta
                      : volt
         
-        dv/dt = (g_l*(v-El) - 
-                 g_NA*m**3*h*(v-ENa) - 
-                 g_K*n**4*(v-EK))/Cm: volt
-        
-        alphah = .07*exp(-.05*v/mV)/ms    : Hz
-        alpham = .1*(25*mV-v)/(exp(2.5-.1*v/mV)-1)/mV/ms : Hz
-        alphan = .01*(10*mV-v)/(exp(1-.1*v/mV)-1)/mV/ms : Hz
-        betah = 1./(1+exp(3.-.1*v/mV))/ms : Hz
-        betam = 4*exp(-.0556*v/mV)/ms : Hz
-        betan = .125*exp(-.0125*v/mV)/ms : Hz
-        dh/dt = alphah*(1-h)-betah*h : 1
-        dm/dt = alpham*(1-m)-betam*m : 1
-        dn/dt = alphan*(1-n)-betan*n : 1
+        dv/dt = ((gl*(El-v) - g_na*(m*m*m)*h*(v-ENa) - g_kd*(n*n*n*n)*(v-EK) + I)/Cm) + I_syn : volt
+        dm/dt = 0.32*(mV**-1)*(13.*mV-v+VT)/
+            (exp((13.*mV-v+VT)/(4.*mV))-1.)/ms*(1-m)-0.28*(mV**-1)*(v-VT-40.*mV)/
+            (exp((v-VT-40.*mV)/(5.*mV))-1.)/ms*m : 1
+        dn/dt = 0.032*(mV**-1)*(15.*mV-v+VT)/
+            (exp((15.*mV-v+VT)/(5.*mV))-1.)/ms*(1.-n)-.5*exp((10.*mV-v+VT)/(40.*mV))/ms*n : 1
+        dh/dt = 0.128*exp((17.*mV-v+VT)/(18.*mV))/ms*(1.-h)-4./(1+exp((40.*mV-v+VT)/(5.*mV)))/ms*h : 1
 
+        I : amp
+        
         theta_eq : volt
         
         tau_theta : second
@@ -565,8 +550,8 @@ def equation (type):
     #eqs_syn from https://brian2.readthedocs.io/en/stable/user/converting_from_integrated_form.html
     #Biexponential synapse
         eqs = '''
-        dg_{tr}_syn{st}/dt = ((tau2_{tr} / tau1_{tr}) ** (tau1_{tr} / (tau2_{tr} - tau1_{tr}))*x_{tr}{st}-g_{tr}_syn{st})/tau1_{tr} : 1
-        dx_{tr}{st}/dt =  (-x_{tr}{st}/tau2_{tr}) : 1
+        dg_{tr}_syn{st}/dt = ((tau2_{tr} / tau1_{tr}) ** (tau1_{tr} / (tau2_{tr} - tau1_{tr}))*x_{tr}{st}-g_{tr}_syn{st})/tau1_{tr} : 1 (clock-driven)
+        dx_{tr}{st}/dt =  (-x_{tr}{st}/tau2_{tr}) : 1 (clock-driven)
         g_{tr}{st}_post = g_{tr}_syn{st} : 1 (summed)
         w : 1
         '''

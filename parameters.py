@@ -5,12 +5,12 @@ Created on Tue Oct 29 11:07:25 2019
 @author: lmun373
 """
 import brian2 as b2
-from brian2 import ms, mV, um, NeuronGroup, umetre, cm, siemens, ufarad, msiemens
+from brian2 import ms, mV, um, umetre, cm, siemens, ufarad, msiemens
 
 tau1_AMPA = 0.5*ms
 tau2_AMPA = 2.4*ms
 Erev_AMPA = 0*mV
-gpeak_AMPA = 0.1
+gpeak_AMPA = 0.175
 
 tau1_GABAA = 1*ms
 tau2_GABAA = 7*ms
@@ -28,13 +28,28 @@ Erev_NMDA = 0*mV
 gpeak_NMDA = 0.1
 
 #Constants
-EK = -80*mV               # Potassium
-ENa = 60*mV               # Sodium #50
-El = -20* mV          # Leak 10.6mV
-gl = 0.33
+EK = -90*mV               # Potassium
+ENa = 50*mV               # Sodium #50
+El = 0 * mV          # Leak -10.6mV
+gl = 0              # 0.33
 
 #Constant in threshold equation
 C = 0.85
+
+#Resting Membrane potential
+#RV = -60*mV
+
+##HH Parameters
+##https://brian2.readthedocs.io/en/stable/resources/tutorials/3-intro-to-brian-simulations.html
+#area = 20000*umetre**2
+#Cm = 1*ufarad*cm**-2 * area
+#gl = 5e-5*siemens*cm**-2 * area
+#El = -65*mV
+#EK = -90*mV
+#ENa = 50*mV
+#g_na = 100*msiemens*cm**-2 * area
+#g_kd = 30*msiemens*cm**-2 * area
+#VT = -63*mV
 
 ##Constants from Gurleen
 #area = 20000*umetre**2
@@ -61,5 +76,5 @@ C = 0.85
 #Cm = 1 * b2.ufarad
 
 #Membrane threshold
-VT = -63*mV
+#VT = -60*mV
 

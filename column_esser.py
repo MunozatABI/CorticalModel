@@ -28,7 +28,7 @@ warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 ###############################################################################
-tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 #tab1 = pd.read_csv('Esser_table2.csv', nrows = 2, delimiter=' ', index_col=False) #Define input table
 
 ##Simulation Parameters
@@ -97,10 +97,10 @@ src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_gro
 #Model of TMS activation
 TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
 TMS_synapse_180 = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
-TMS_synapse_0.connect(p=0.5)
-TMS_synapse_180.connect(p=0.5)
-TMS_synapse_0.w = 1
-TMS_synapse_180.w = 1
+TMS_synapse_0.connect(p=0.25)
+TMS_synapse_180.connect(p=0.25)
+TMS_synapse_0.w = 0.25
+TMS_synapse_180.w = 0.25
 
 ###############################################################################
 ########                         Monitors                               #######
