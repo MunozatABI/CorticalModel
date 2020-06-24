@@ -210,8 +210,8 @@ class generate:
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
-            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2  + (Z_pre-Z_post)**2)/(2*(30*um*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
-            syn.w = (r.loc['Strength']/10)  #Weights scaled to match Iriki et al., 1991
+            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*um*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
+            syn.w = (r.loc['Strength']/20)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
@@ -344,16 +344,18 @@ class visualise():
 def equation (type):
 
     if type == 'current':
-
+        
         eqs = '''
         dtheta/dt = (-1*(theta - theta_eq)
                      + C * (v - theta_eq)) / tau_theta
                      : volt
         
-        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
-            / (tau_m/5)   
-            - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
+        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El) + I))
+            / (tau_m/8)   
+            - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike/2))
               : volt
+              
+        I = ta(t) : volt
         
         theta_eq : volt
         

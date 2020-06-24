@@ -27,15 +27,16 @@ start = time.time() #Running time
 warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
-###############################################################################
-tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
-#tab1 = pd.read_csv('Esser_table2.csv', nrows = 2, delimiter=' ', index_col=False) #Define input table
+#################### ###########################################################
+tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 
 ##Simulation Parameters
 duration = 1000*ms     # Total simulation time
 sim_dt = 0.1*ms           # Integrator/sampling step
-#sim_dt = 0.001*ms           # Integrator/sampling step
 
+##TMS Simulation
+a = 0
+ta = b2.TimedArray(np.hstack((np.zeros(100), a, 0))*mV, dt = 3*ms)
 ###############################################################################
 ########                     Neuron Equations                           #######
 ###############################################################################
@@ -46,7 +47,7 @@ eqs += 'g_AMPAa : 1\n g_AMPAb : 1\n g_AMPAc : 1\n' + ''.join(['g_{}{} : 1\n'.for
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-num_cols = 128 #2, 8, 32, 128
+num_cols = 2 #2, 8, 32, 128
 columnsgroup_0 = []
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
 columnsgroup_180 = fl.generate.column(num_cols,eqs,180)
@@ -83,9 +84,9 @@ neuron_group = {'L2/3E0': columnsgroup_0[0:50*num_cols],
                  }
 
 
-b2.SpikeGeneratorGroup(1, [0], [250]*ms)
-
-TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
+#b2.SpikeGeneratorGroup(1, [0], [250]*ms)
+#
+#TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
 
 ###############################################################################
 ########                          Synapses                              #######
@@ -94,13 +95,13 @@ Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [
 
 src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
 
-#Model of TMS activation
-TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
-TMS_synapse_180 = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
-TMS_synapse_0.connect(p=0.25)
-TMS_synapse_180.connect(p=0.25)
-TMS_synapse_0.w = 0.25
-TMS_synapse_180.w = 0.25
+##Model of TMS activation
+#TMS_synapse_0 = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
+#TMS_synapse_180 = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
+#TMS_synapse_0.connect(p=0.25)
+#TMS_synapse_180.connect(p=0.25)
+#TMS_synapse_0.w = 1
+#TMS_synapse_180.w = 1
 
 ###############################################################################
 ########                         Monitors                               #######
@@ -213,48 +214,48 @@ ax[5].set_xlabel('Time (ms)')
 #    if src_group[k] == 'L2/3E':
 #        sources = sources
 #    if src_group[k] == 'L2/3I':
-#        sources = sources + 49
+#        sources = sources + 49 * num_cols
 #    if src_group[k] == 'L5E':
-#        sources = sources + 74
+#        sources = sources + 74 * num_cols
 #    if src_group[k] == 'L5I':
-#        sources = sources + 124
+#        sources = sources + 124 * num_cols
 #    if src_group[k] == 'L6E':
-#        sources = sources + 149
+#        sources = sources + 149 * num_cols
 #    if src_group[k] == 'L6I':
-#        sources = sources + 199
+#        sources = sources + 199 * num_cols
 #    if src_group[k] == 'MTE':
-#        sources = sources + 224
+#        sources = sources + 224 * num_cols
 #    if src_group[k] == 'MTI':
-#        sources = sources + 236
+#        sources = sources + 236 * num_cols
 #    if src_group[k] == 'RI':
-#        sources = sources + 242
+#        sources = sources + 242 * num_cols
 #    if src_group[k] == 'SIE':
-#        sources = sources + 249
+#        sources = sources + 249 * num_cols
 #    if src_group[k] == 'PME':
-#        sources = sources + 260
+#        sources = sources + 260 * num_cols
 #        
 #    if tgt_group[k] == 'L2/3E':
 #        targets = targets
 #    if tgt_group[k] == 'L2/3I':
-#        targets = targets + 49
+#        targets = targets + 49 * num_cols
 #    if tgt_group[k] == 'L5E':
-#        targets = targets + 74
+#        targets = targets + 74 * num_cols
 #    if tgt_group[k] == 'L5I':
-#        targets = targets + 124
+#        targets = targets + 124 * num_cols
 #    if tgt_group[k] == 'L6E':
-#        targets = targets + 149
+#        targets = targets + 149 * num_cols
 #    if tgt_group[k] == 'L6I':
-#        targets = targets + 199
+#        targets = targets + 199 * num_cols
 #    if tgt_group[k] == 'MTE':
-#        targets = targets + 224
+#        targets = targets + 224 * num_cols
 #    if tgt_group[k] == 'MTI':
-#        targets = targets + 236
+#        targets = targets + 236 * num_cols
 #    if tgt_group[k] == 'RI':
-#        targets = targets + 242
+#        targets = targets + 242 * num_cols
 #    if tgt_group[k] == 'SIE':
-#        targets = targets + 249
+#        targets = targets + 249 * num_cols
 #    if tgt_group[k] == 'PME':
-#        targets = targets + 260
+#        targets = targets + 260 * num_cols
 #        
 #    src_indexes.extend(sources)
 #    tgt_indexes.extend(targets)
