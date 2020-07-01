@@ -23,103 +23,107 @@ from parameters import *
 
 simulation_time = 1000     # Total simulation time 
 
-##TMS Simulation
-a = 0
-ta = b2.TimedArray(np.hstack((np.zeros(100), a, 0))*mV, dt = 3*ms)
+w_range = np.linspace(0, 5, 26)
+output_rates = []
+for w_val in w_range:
+    ##TMS Simulation
+    #a = 0
+    #ta = b2.TimedArray(np.hstack((np.zeros(100), a, 0))*mV, dt = 3*ms)
 ###############################################################################
 ########                     Neuron Equations                           #######
 ###############################################################################
-Transmitters = ['NMDA', 'AMPA','GABAA']
-eqs = fl.equation('current')
-eqs += 'I_syn = (v - Erev_AMPA) * g_AMPA + (v - Erev_AMPA) * g_AMPA_2 +' + '+'.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
-eqs += 'g_AMPA : 1\n g_AMPA_2 :1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitters[i], i) for i in range(len(Transmitters))])
-
+    Transmitters = ['AMPA', 'AMPA','GABAA']
+    eqs = fl.equation('current')
+    eqs += 'I_syn = (v - Erev_AMPA) * g_AMPA + (v - Erev_AMPA) * g_AMPA_2 +' + '+'.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
+    eqs += 'g_AMPA : 1\n g_AMPA_2 :1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitters[i], i) for i in range(len(Transmitters))])
+    
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-#initialise neurons
-neuron_type = ['MPE', 'MPE', 'MPI']
-neuron_num = [1, 1, 1]
-Neurons = fl.generate.neurons(neuron_num, neuron_type, eqs, 1, 0)
-#initialise input (thalamic) neurons
-in_type = ['THA']
-in_num = [2]
-Input_Neurons = fl.generate.neurons(in_num, in_type, eqs, 1, 0)
-
-#Spike definitions for input neurons
-Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms) 
-Spike2 = b2.SpikeGeneratorGroup(1, [0], [510]*ms)
-
-#Subgrouping definitions
-A = Input_Neurons[0:1] #Input Neuron 1
-B = Input_Neurons[1:2] #Input Neuron 2
-G = Neurons[0:1] #MP Excitatory
-H = Neurons[1:2] #L5 Excitatory
-K = Neurons[2:3] #MP Inhibitory
-
+    #initialise neurons
+    neuron_type = ['MPE', 'MPE', 'MPI']
+    neuron_num = [1, 1, 1]
+    Neurons = fl.generate.neurons(neuron_num, neuron_type, eqs, 1, 0)
+    #initialise input (thalamic) neurons
+    in_type = ['THA']
+    in_num = [2]
+    Input_Neurons = fl.generate.neurons(in_num, in_type, eqs, 1, 0)
+    
+    #Spike definitions for input neurons
+    Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms) 
+    Spike2 = b2.SpikeGeneratorGroup(1, [0], [510]*ms)
+    
+    #Subgrouping definitions
+    A = Input_Neurons[0:1] #Input Neuron 1
+    B = Input_Neurons[1:2] #Input Neuron 2
+    G = Neurons[0:1] #MP Excitatory
+    H = Neurons[1:2] #L5 Excitatory
+    K = Neurons[2:3] #MP Inhibitory
+    
 ###############################################################################
 ########                          Synapses                              #######
 ###############################################################################
-#Input_synpase definitions
-Input_syn1 = b2.Synapses(Spike1, A, '''
-dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
-dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
-g_AMPA_post = g_AMPA_syn : 1 (summed)
-w : 1
-''', method = 'rk4', on_pre='x_AMPA += w')    
-Input_syn1.connect(p = 1)
-Input_syn1.w = 1
-
-Input_syn2 = b2.Synapses(Spike2, B, '''
-dg_AMPA_syn_2/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA_2-g_AMPA_syn_2)/tau1_AMPA : 1
-dx_AMPA_2/dt =  (-x_AMPA_2/tau2_AMPA) : 1
-g_AMPA_2_post = g_AMPA_syn_2 : 1 (summed)
-w : 1
-''', method = 'rk4', on_pre='x_AMPA_2 += w')    
-Input_syn2.connect(p = 1)
-Input_syn2.w = 1
-
-synapses_group = []
-synapses_group.append(Input_syn1)
-synapses_group.append(Input_syn2)
-
-Inputs = [A, G] ### Define Inputs here ###
-Targets = [G, H]  ### Define Targets here ###
-prob = [1, 1]
-weight = [1, 1]
-delay = [1.4, 1.4]
-
-synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, prob, weight, delay, S=True)
+    #Input_synpase definitions
+    Input_syn1 = b2.Synapses(Spike1, A, '''
+    dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
+    dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
+    g_AMPA_post = g_AMPA_syn : 1 (summed)
+    w : 1
+    ''', method = 'rk4', on_pre='x_AMPA += w')    
+    Input_syn1.connect(p = 1)
+    Input_syn1.w = 1
+    
+    Input_syn2 = b2.Synapses(Spike2, B, '''
+    dg_AMPA_syn_2/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA_2-g_AMPA_syn_2)/tau1_AMPA : 1
+    dx_AMPA_2/dt =  (-x_AMPA_2/tau2_AMPA) : 1
+    g_AMPA_2_post = g_AMPA_syn_2 : 1 (summed)
+    w : 1
+    ''', method = 'rk4', on_pre='x_AMPA_2 += w')    
+    Input_syn2.connect(p = 1)
+    Input_syn2.w = 1
+    
+    synapses_group = []
+    synapses_group.append(Input_syn1)
+    synapses_group.append(Input_syn2)
+    
+    Inputs = [A] ### Define Inputs here ###
+    Targets = [G]  ### Define Targets here ###
+    prob = [1]
+    weight = [w_val]
+    delay = [1.4]
+    
+    synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, prob, weight, delay, S=True)
 ###############################################################################
 ########                         Monitors                               #######
 ###############################################################################
-#Monitoring membrane potentials
-M1 = b2.StateMonitor(Inputs[1], ['v', 'theta'], record=True)
-M2 = b2.StateMonitor(Targets[1], 'v', record=True)
-#M3 = b2.StateMonitor(Targets[1], 'v', record=True)
-#SpikeMon1 = b2.SpikeMonitor(Spike1)
-SpikeMon = b2.SpikeMonitor(A)
-#SpikeMon2 = b2.SpikeMonitor(Spike2)
+    #Monitoring membrane potentials
+    M1 = b2.StateMonitor(Inputs[0], ['v', 'theta'], record=True)
+    M2 = b2.StateMonitor(Targets[0], 'v', record=True)
+    #M3 = b2.StateMonitor(Targets[1], 'v', record=True)
+    #SpikeMon1 = b2.SpikeMonitor(Spike1)
+    SpikeMon = b2.SpikeMonitor(G)
+    #SpikeMon2 = b2.SpikeMonitor(Spike2)
 
 ###############################################################################
 ########                         Run Model                              #######
 ###############################################################################
-net = b2.Network(b2.collect())  #Automatically add visible objects 
-net.add(synapses_group)           #Manually add list of synapses
-
-net.run(simulation_time*ms) #Run simulation
-
+    net = b2.Network(b2.collect())  #Automatically add visible objects 
+    net.add(synapses_group)           #Manually add list of synapses
+    net.run(simulation_time*ms) #Run simulation
+    output_rates.append(SpikeMon.num_spikes/second)
 ###############################################################################
 ########                       Plot Graphs                              #######
 ###############################################################################
-#Plot Membrane Potential
-Monitors = [M1]
-Labels = ['Input Neuron 1']
-fl.visualise.membrane_voltage(Labels, Monitors, [0])
+plt.plot(w_range, output_rates)
 
-Monitors = [M2]
-Labels = ['Target Neuron 1']
-fl.visualise.membrane_voltage(Labels, Monitors, [0])
+##Plot Membrane Potential
+#Monitors = [M1]
+#Labels = ['Input Neuron 1']
+#fl.visualise.membrane_voltage(Labels, Monitors, [0])
+#
+#Monitors = [M2]
+#Labels = ['Target Neuron 1']
+#fl.visualise.membrane_voltage(Labels, Monitors, [0])
 
 #plt.figure()
 #plt.plot(M2.v[0][0:200])
