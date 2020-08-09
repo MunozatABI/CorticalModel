@@ -210,7 +210,7 @@ class generate:
                               model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
-            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*um*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
+            syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
             syn.w = (r.loc['Strength']/20)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
@@ -290,6 +290,18 @@ def input_firing(mean_frequency, times, zeros, simulation_time):
         
     return times, zeros
 
+def calculate_isi(spike_times, neuron_index):
+    isis = []
+    neurons = np.unique(neuron_index)
+    get_indexes = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
+    
+    for i in range(len(neurons)):
+        idxs = get_indexes(neurons[i],neuron_index)
+        intime = [spike_times[x] for x in idxs]
+        isis += [np.diff(intime)]
+        
+    return isis
+
 class visualise():
 
     #Function to plot the membrane voltage of cells
@@ -335,10 +347,38 @@ class visualise():
         b2.xlabel('Source neuron index')
         b2.ylabel('Target neuron index')
         
-   ####Function to visualise synapses
-   # def syanpses(synapse):
-
-
+   #Function to visualise connectivity of individual neurons in network
+       #neuron_num: number of input neuron
+       #synapses: synapses group
+       #columnsgroup: neuron group
+    def neuron_connectivity(neuron_num, synapses, columnsgroup):
+       tgt_list = []
+        
+       get_indexes = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
+        
+       for n in range(len(synapses)):
+           idxs = get_indexes(neuron_num, synapses[n].i)
+           tgts = [synapses[n].j[x] for x in idxs]
+           tgt_list.append(tgts)
+        
+       flat_tgt = [val for sublist in tgt_list for val in sublist]
+        
+       x_ori = [columnsgroup[neuron_num].X]
+       y_ori = [columnsgroup[neuron_num].Y]
+       z_ori = [columnsgroup[neuron_num].Z]
+        
+       x_vals = [columnsgroup[k].X for k in flat_tgt]
+       y_vals = [columnsgroup[k].Y for k in flat_tgt]
+       z_vals = [columnsgroup[k].Z for k in flat_tgt]
+        
+       ##### 3D Connectivity Plot ####
+       fig = plt.figure(figsize=(10,8))
+       ax = fig.add_subplot(111, projection='3d')
+       ax.scatter(x_vals/b2.umetre, y_vals/b2.umetre, z_vals/b2.umetre, marker='o')
+       ax.scatter(x_ori/b2.umetre, y_ori/b2.umetre, z_ori/b2.umetre, color = 'red', marker='x')
+       plt.xlabel("Distance (um)")
+       plt.ylabel("Distance (um)")
+       
 #Define equations
    # start_time = t * int(v>=theta) - count*dt : second
 def equation (type):
@@ -350,13 +390,11 @@ def equation (type):
                      + C * (v - theta_eq)) / tau_theta
                      : volt
         
-        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El) + I))
+        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
             / (tau_m/8)   
             - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike/2))
               : volt
-              
-        I = ta(t) : volt
-        
+                      
         theta_eq : volt
         
         tau_theta : second
@@ -385,10 +423,12 @@ def equation (type):
                      + C * (v - theta_eq)) / tau_theta
                      : volt
         
-        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - gl*(v-El) - I_syn))
-            / (tau_m/5)   
+        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - gl*(v-El) - I_syn  + I))
+            / (tau_m/8)   
             - int(v >= theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike/2))
               : volt
+              
+        I = ta(t) : volt
         
         theta_eq : volt
         

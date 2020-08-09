@@ -41,10 +41,10 @@ y : 1
 ###############################################################################
 def simulate():
 #initialise neurons
-    length = 600
+    length = 300
     Input = b2.NeuronGroup(1, eqs, threshold='v>0.1*mV', reset='v = 0*mV', method='exact')
-    Input.x = [300]
-    Input.y = [300]
+    Input.x = [150]
+    Input.y = [150]
     
     num = 100 #Must be square number
     G = b2.NeuronGroup(num, eqs, threshold='v>0.1*mV', reset='v = 0*mV', method='exact')
@@ -65,12 +65,14 @@ def simulate():
 ###############################################################################
 ########                          Synapses                              #######
 ###############################################################################
+    Pmax = 1.0
+    Radius = 2
     S_input = b2.Synapses(Spike, Input, on_pre='v_post += 0.2*mV') 
     S_input.connect('i==j')
 
-    S = b2.Synapses(Input, G, on_pre='v_post += 0.2*mV') 
-    S.connect('i != j',
-                     p='1.0 * exp(-((x_pre-x_post)**2 + (y_pre-y_post)**2)/(2*(60)**2))')
+    S = b2.Synapses(Input, G, on_pre='v_post += 0.2*mV')
+    S.connect(condition = 'i != j', p='{} * exp(-((x_pre-x_post)**2 + (y_pre-y_post)**2)/(2*(37.5*{})**2))'.format(Pmax,Radius))
+    #S.connect('i != j', p='1.0 * exp(-((x_pre-x_post)**2 + (y_pre-y_post)**2)/(2*(60)**2))')
 ###############################################################################
 ########                         Monitors                               #######
 ###############################################################################
