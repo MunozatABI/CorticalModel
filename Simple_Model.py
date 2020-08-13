@@ -10,6 +10,7 @@ Created on Thu Jul 25 10:12:50 2019
 import brian2 as b2
 from brian2 import mV, ms, ufarad, cm, umetre, volt, second, msiemens, siemens, nS, pA
 import numpy as np
+from scipy.optimize import minimize
 import function_library as fl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D 
@@ -23,12 +24,14 @@ from parameters import *
 
 simulation_time = 1000     # Total simulation time 
 
-w_range = np.linspace(0, 5, 26)
-output_rates = []
-for w_val in w_range:
+#w_range = np.linspace(0, 5, 26)
+#output_rates = []
+#for w_val in w_range:
     ##TMS Simulation
     #a = 0
     #ta = b2.TimedArray(np.hstack((np.zeros(100), a, 0))*mV, dt = 3*ms)
+
+def objective(x):
 ###############################################################################
 ########                     Neuron Equations                           #######
 ###############################################################################
@@ -37,9 +40,9 @@ for w_val in w_range:
     eqs += 'I_syn = (v - Erev_AMPA) * g_AMPA + (v - Erev_AMPA) * g_AMPA_2 +' + '+'.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
     eqs += 'g_AMPA : 1\n g_AMPA_2 :1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitters[i], i) for i in range(len(Transmitters))])
     
-###############################################################################
-########                      Create Neurons                            #######
-###############################################################################
+    ###############################################################################
+    ########                      Create Neurons                            #######
+    ###############################################################################
     #initialise neurons
     neuron_type = ['MPE', 'MPE', 'MPI']
     neuron_num = [1, 1, 1]
@@ -60,9 +63,9 @@ for w_val in w_range:
     H = Neurons[1:2] #L5 Excitatory
     K = Neurons[2:3] #MP Inhibitory
     
-###############################################################################
-########                          Synapses                              #######
-###############################################################################
+    ###############################################################################
+    ########                          Synapses                              #######
+    ###############################################################################
     #Input_synpase definitions
     Input_syn1 = b2.Synapses(Spike1, A, '''
     dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
@@ -86,37 +89,53 @@ for w_val in w_range:
     synapses_group.append(Input_syn1)
     synapses_group.append(Input_syn2)
     
-    Inputs = [A] ### Define Inputs here ###
-    Targets = [G]  ### Define Targets here ###
-    prob = [1]
-    weight = [w_val]
-    delay = [1.4]
+    Inputs = [A, A, A] ### Define Inputs here ###
+    Targets = [G, H, K]  ### Define Targets here ###
+    prob = x
+    weight = [1, 1, 1]
+    #weight = [w_val]
+    delay = [1.4, 1.4, 1.4]
     
     synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, prob, weight, delay, S=True)
-###############################################################################
-########                         Monitors                               #######
-###############################################################################
+    ###############################################################################
+    ########                         Monitors                               #######
+    ###############################################################################
     #Monitoring membrane potentials
     M1 = b2.StateMonitor(Inputs[0], ['v', 'theta'], record=True)
     M2 = b2.StateMonitor(Targets[0], 'v', record=True)
+    M3 = b2.StateMonitor(Targets[1], 'v', record=True)
+    M4 = b2.StateMonitor(Targets[2], 'v', record=True)
     #M3 = b2.StateMonitor(Targets[1], 'v', record=True)
     #SpikeMon1 = b2.SpikeMonitor(Spike1)
-    SpikeMon = b2.SpikeMonitor(G)
+    #SpikeMon = b2.SpikeMonitor(G)
     #SpikeMon2 = b2.SpikeMonitor(Spike2)
-
-###############################################################################
-########                         Run Model                              #######
-###############################################################################
+    
+    ###############################################################################
+    ########                         Run Model                              #######
+    ###############################################################################
     net = b2.Network(b2.collect())  #Automatically add visible objects 
     net.add(synapses_group)           #Manually add list of synapses
     net.run(simulation_time*ms) #Run simulation
-    output_rates.append(SpikeMon.num_spikes/second)
+    #output_rates.append(SpikeMon.num_spikes/second)
+    
+    errors = (np.max(M1.v/b2.mV) - np.max(M2.v/b2.mV))**2 + (np.max(M1.v/b2.mV) - np.max(M3.v/b2.mV))**2 + (np.max(M1.v/b2.mV) - np.max(M4.v/b2.mV))**2
+    
+    return errors
 ###############################################################################
 ########                       Plot Graphs                              #######
 ###############################################################################
-plt.plot(w_range, output_rates)
+#plt.plot(w_range, output_rates)
+    
+x0 = [0.1, 0.1, 0.1]
+print(objective(x0))
 
-##Plot Membrane Potential
+b = (0.0, 1.0)
+bnds = (b,b,b)
+
+sol = minimize(objective, x0, bounds=bnds)
+print(sol)
+
+#Plot Membrane Potential
 #Monitors = [M1]
 #Labels = ['Input Neuron 1']
 #fl.visualise.membrane_voltage(Labels, Monitors, [0])

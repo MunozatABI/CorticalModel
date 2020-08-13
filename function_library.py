@@ -188,7 +188,7 @@ class generate:
                 st = chr(97 + i)
                 
             syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st))
-            syn.connect(j = 'i', p=prob[i])
+            syn.connect(p=prob[i]) #j = 'i'
             syn.w = w[i]
             syn.delay = delay[i]*ms
             synapses_group.append(syn)
@@ -374,8 +374,8 @@ class visualise():
        ##### 3D Connectivity Plot ####
        fig = plt.figure(figsize=(10,8))
        ax = fig.add_subplot(111, projection='3d')
-       ax.scatter(x_vals/b2.umetre, y_vals/b2.umetre, z_vals/b2.umetre, marker='o')
-       ax.scatter(x_ori/b2.umetre, y_ori/b2.umetre, z_ori/b2.umetre, color = 'red', marker='x')
+       ax.scatter(x_vals/b2.umetre, y_vals/b2.umetre, z_vals/b2.umetre, marker='o', alpha = 0.1)
+       ax.scatter(x_ori/b2.umetre, y_ori/b2.umetre, z_ori/b2.umetre, color = 'red', marker='x', alpha = 0.1)
        plt.xlabel("Distance (um)")
        plt.ylabel("Distance (um)")
        

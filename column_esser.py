@@ -28,7 +28,7 @@ warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 #################### ###########################################################
-tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 
 ##Simulation Parameters
 duration = 1000*ms     # Total simulation time
