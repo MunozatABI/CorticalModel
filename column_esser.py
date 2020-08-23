@@ -163,6 +163,10 @@ for var in var_range:
 #axes[1].plot(var_range, L5E_output_rates, 'C1', label = 'L5E')
 #axes[1].plot(var_range, L5I_output_rates, '-k', label = 'L5I')
 
+####Connectivity Plots
+#fl.visualise.neuron_connectivity(1,synapses_group,Neurons)
+#fl.visualise.connectivity_distances(columnsgroup_0, all_synapses)
+
 #Firing rate for each layer
 L23_firing = spikemonL23E.num_spikes + spikemonL23I.num_spikes
 L5_firing = spikemonL5E.num_spikes + spikemonL5I.num_spikes
@@ -184,8 +188,8 @@ index = [0, 0, 0, 0, 0]
 #Plot Cortex Membrane Potentials
 arraynum = time0*10
 fig, ax = plt.subplots(5,1, figsize=(12,13), sharex=True)
-#plt.figure(figsize=(12, 5))
-#plt.subplot(2,1,1)
+plt.figure(figsize=(12, 5))
+plt.subplot(2,1,1)
 ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[25*num_cols][arraynum:], 'C0', label='L3E')
 ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[57*num_cols][arraynum:], 'C1', label='L3I')
 ax[0].plot(statemon.t[arraynum:]/ms, statemon.v[100*num_cols][arraynum:], 'C2', label='L5E')
@@ -200,7 +204,7 @@ ax[1].set_ylabel('Neuron')
 
 #### Plot Thalamus Membrane Potential ####
 ax[2].plot(inputstatemon.t[arraynum:]/ms, inputstatemon.v[1][arraynum:], 'C6', label='MTE')
-#plt.plot(inputstatemon.t[2000:]/ms, inputstatemon.v[120][2000:], 'C4', label='PME')
+plt.plot(inputstatemon.t[2000:]/ms, inputstatemon.v[120][2000:], 'C4', label='PME')
 ax[2].set_ylabel('v')
 ax[2].legend()
 ax[3].plot(inputspikemon_TH.t[index[3]:]/ms, inputspikemon_TH.i[index[3]:], '.k')

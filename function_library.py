@@ -7,6 +7,7 @@ Created on Wed Jul 10 14:01:07 2019
 import parameters as pm
 from parameters import * 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import brian2 as b2
 import re
@@ -188,7 +189,9 @@ class generate:
                 st = chr(97 + i)
                 
             syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st))
-            syn.connect(p=prob[i]) #j = 'i'
+            syn.connect(condition = 'j != i', p=prob[i]) #j = 'i'
+            #radius = 2
+            #syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/(2*(1*{})**2))'.format(prob[i], radius))
             syn.w = w[i]
             syn.delay = delay[i]*ms
             synapses_group.append(syn)
@@ -211,7 +214,7 @@ class generate:
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
-            syn.w = (r.loc['Strength']/20)  #Weights scaled to match Iriki et al., 1991
+            syn.w = (r.loc['Strength']/5)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
@@ -351,34 +354,51 @@ class visualise():
        #neuron_num: number of input neuron
        #synapses: synapses group
        #columnsgroup: neuron group
-    def neuron_connectivity(neuron_num, synapses, columnsgroup):
+    def neuron_connectivity(neuron_num, synapses, neurongroup, plot = True):
        tgt_list = []
-        
+       distances = []
+       
        get_indexes = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
-        
+           
        for n in range(len(synapses)):
-           idxs = get_indexes(neuron_num, synapses[n].i)
-           tgts = [synapses[n].j[x] for x in idxs]
-           tgt_list.append(tgts)
-        
+            idxs = get_indexes(neuron_num, synapses[n].i)
+            tgts = [synapses[n].j[x] for x in idxs]
+            tgt_list.append(tgts)
+     
        flat_tgt = [val for sublist in tgt_list for val in sublist]
         
-       x_ori = [columnsgroup[neuron_num].X]
-       y_ori = [columnsgroup[neuron_num].Y]
-       z_ori = [columnsgroup[neuron_num].Z]
+       x_ori = [neurongroup[neuron_num].X]
+       y_ori = [neurongroup[neuron_num].Y]
+       z_ori = [neurongroup[neuron_num].Z]
         
-       x_vals = [columnsgroup[k].X for k in flat_tgt]
-       y_vals = [columnsgroup[k].Y for k in flat_tgt]
-       z_vals = [columnsgroup[k].Z for k in flat_tgt]
-        
-       ##### 3D Connectivity Plot ####
-       fig = plt.figure(figsize=(10,8))
-       ax = fig.add_subplot(111, projection='3d')
-       ax.scatter(x_vals/b2.umetre, y_vals/b2.umetre, z_vals/b2.umetre, marker='o', alpha = 0.1)
-       ax.scatter(x_ori/b2.umetre, y_ori/b2.umetre, z_ori/b2.umetre, color = 'red', marker='x', alpha = 0.1)
-       plt.xlabel("Distance (um)")
-       plt.ylabel("Distance (um)")
+       x_vals = [neurongroup[k].X for k in flat_tgt]
+       y_vals = [neurongroup[k].Y for k in flat_tgt]
+       z_vals = [neurongroup[k].Z for k in flat_tgt]
        
+       for i in range(len(flat_tgt)):
+           distances.extend(np.sqrt((x_vals[i] - x_ori[0]) ** 2 + (y_vals[i] - y_ori[0]) ** 2 + (z_vals[i] - z_ori[0]) ** 2))
+        
+       if plot == True:
+           ##### 3D Connectivity Plot ####
+           fig = plt.figure(figsize=(10,8))
+           ax = fig.add_subplot(111, projection='3d')
+           ax.scatter(x_vals/b2.umetre, y_vals/b2.umetre, z_vals/b2.umetre, s = 10, marker='.', alpha = 1)
+           ax.scatter(x_ori/b2.umetre, y_ori/b2.umetre, z_ori/b2.umetre, s = 20, color = 'red', marker='^', alpha = 1)
+           plt.xlabel("Distance (um)")
+           plt.ylabel("Distance (um)")
+       
+       return distances
+       
+
+    def connectivity_distances(neurongroup, synapses):
+        distancearray = []
+        for neuron_num in range(len(neurongroup)):
+            distancearray += visualise.neuron_connectivity(neuron_num, synapses, neurongroup, plot = False)
+
+        plt.hist(distancearray, bins = 20)
+        
+        return distancearray
+           
 #Define equations
    # start_time = t * int(v>=theta) - count*dt : second
 def equation (type):
@@ -391,8 +411,8 @@ def equation (type):
                      : volt
         
         dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
-            / (tau_m/8)   
-            - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike/2))
+            / (tau_m)   
+            - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
               : volt
                       
         theta_eq : volt
