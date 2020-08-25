@@ -64,6 +64,8 @@ G = Neurons[0:25] #MP Excitatory
 H = Neurons[25:50] #L5 Excitatory
 K = Neurons[50:75] #MP Inhibitory
 
+#subindexes = [0,25,50]
+
 ###############################################################################
 ########                          Synapses                              #######
 ###############################################################################
@@ -92,7 +94,7 @@ synapses_group.append(Input_syn2)
 
 Inputs = [G, G] ### Define Inputs here ###
 Targets = [H, K]  ### Define Targets here ###
-prob = [0.5, 0.5]
+prob = [0.1, 0.1]
 weight = [1, 1] #x
 #weight = [w_val]
 delay = [1.4, 1.4]
@@ -137,8 +139,16 @@ x0 = [0.5, 0.6, 0.7]
 b = (0.0, 1.0)
 bnds = (b,b,b)
 
-fl.visualise.neuron_connectivity(1,synapses_group,Neurons)
-fl.visualise.connectivity_distances(Neurons, synapses_group)
+source_subidx = [0, 0]
+target_subidx = [25, 50]
+
+fl.visualise.connectivity(synapses_group, source_subidx, target_subidx)
+
+fl.visualise.single_neuron_connectivity(5,synapses_group,Neurons)
+
+fl.visualise.spatial_connectivity(synapses_group, Neurons, source_subidx, target_subidx)
+
+#fl.visualise.connectivity_distances(Neurons, synapses_group)
 
 #Jacobian Function https://stackoverflow.com/questions/33926357/jacobian-is-required-for-newton-cg-method-when-doing-a-approximation-to-a-jaco
 #fprime = lambda x: scipy.optimize.approx_fprime(x, objective, 0.01)

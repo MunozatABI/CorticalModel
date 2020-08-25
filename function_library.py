@@ -149,7 +149,7 @@ class generate:
         generate.initialise_neurons(ntype, num, numcol, initial_values, pref)
         neurons = b2.NeuronGroup(n, eqs,
                   threshold = 'v > theta', 
-                  reset = 'v = theta',
+                  reset = 'v = -65*mV; theta = -53*mV',
 #                 events={'on_spike': 'v > theta'},
                   method = 'rk4',
                   refractory = 2*ms)
@@ -189,7 +189,8 @@ class generate:
                 st = chr(97 + i)
                 
             syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st))
-            syn.connect(condition = 'j != i', p=prob[i]) #j = 'i'
+            #syn.connect(j = 'i', p=prob[i])
+            syn.connect(p=prob[i])#j = 'i'
             #radius = 2
             #syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/(2*(1*{})**2))'.format(prob[i], radius))
             syn.w = w[i]
@@ -214,7 +215,7 @@ class generate:
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
-            syn.w = (r.loc['Strength']/5)  #Weights scaled to match Iriki et al., 1991
+            syn.w = (r.loc['Strength']/2)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
@@ -245,6 +246,7 @@ class generate:
                     s1[0] = s1[0] + 1000/numspikes[0]
             times.extend(list(np.round(np.cumsum(s1), 1)))
             indices.extend(list(np.ones_like(s1) * j))
+            
         #mu, sigma = round(1000/1), round(100/1.) 
         
         num_spikes2 = round(1*duration/ms/1000)   
@@ -263,18 +265,6 @@ class generate:
         Spikes = b2.SpikeGeneratorGroup(num1+num2, input_indices, input_times)
         return Spikes
                 
-#Function to generate randomly firing neurons for Premotor (PM) and Somatosensory
-#(SI) neurons
-    #num - number of randomly firing neurons
-    #meanfiring - average firing rate in Hz
-    #name - name of neuron group
-def random_firing (num, meanfiring, name):
-    eqs = f"dv/dt = (xi*sqrt(second) + {meanfiring})*Hz : 1"
-    name = NeuronGroup(num, eqs, threshold='v>1', reset='v=0',
-                          method='euler')
-    return (name)
-
-
 #Function to define multiple synapses
         #sources - array of neuron subgroups
         #targets - array of neuron subgroups
@@ -328,44 +318,90 @@ class visualise():
             plt.gca().set_title(labels[i])
             plt.hist(frequencies_input,bins = 30)
     
-    #Function to visualise connectivity
-           #S - synapse
-    def connectivity(S):
-        Ns = len(S.source)
-        Nt = len(S.target)
+    #Function to visualise synapse connectivity in 1D
+           #S - synapses
+           #source_subidx - array of offsets for subgrouping neurons
+           #target_subidx - array of offsets for subgrouping neurons
+    def connectivity(S, source_subidx, target_subidx):
+        Ns = []
+        Nt = []
+
+        for n in range(len(S)):
+            Ns.append(len(S[n].i))
+            Nt.append(len(S[n].j))
         b2.figure(figsize=(10, 4))
         b2.subplot(121)
-        b2.plot(b2.zeros(Ns), b2.arange(Ns), 'ok', ms=10)
-        b2.plot(b2.ones(Nt), b2.arange(Nt), 'ok', ms=10)
-        for i, j in zip(S.i, S.j):
-            b2.plot([0, 1], [i, j], '-k')
+        b2.plot(b2.zeros(sum(Ns)), b2.arange(sum(Ns)), 'ok', ms=5)
+        b2.plot(b2.ones(sum(Nt)), b2.arange(sum(Nt)), 'ok', ms=5)
+        for n in range(len(S)):
+            for i, j in zip(S[n].i, S[n].j):
+                b2.plot([0, 1], [i+source_subidx[n], j+target_subidx[n]], '-k', alpha = 0.2)
         b2.xticks([0, 1], ['Source', 'Target'])
         b2.ylabel('Neuron index')
         b2.xlim(-0.1, 1.1)
-        b2.ylim(-1, max(Ns, Nt))
+        b2.ylim(-1, np.max(S[len(S)-1].j)+max(target_subidx)+3)
         b2.subplot(122)
-        b2.plot(S.i, S.j, 'ok')
-        b2.xlim(-1, Ns)
-        b2.ylim(-1, Nt)
+        for n in range(len(S)):
+            b2.plot((S[n].i)+source_subidx[n], (S[n].j)+target_subidx[n], 'ok')
+        b2.xlim(-1, np.max(S[len(S)-1].i)+max(source_subidx)+1)
+        b2.ylim(-1, np.max(S[len(S)-1].j)+max(target_subidx)+3)
         b2.xlabel('Source neuron index')
         b2.ylabel('Target neuron index')
         
-   #Function to visualise connectivity of individual neurons in network
+        #Function to visualise synapse connectivity in 3D
+           #S - synapses
+           #N - neurons
+           #source_subidx - array of offsets for subgrouping neurons
+           #target_subidx - array of offsets for subgrouping neurons
+    def spatial_connectivity(S, N, source_subidx, target_subidx):
+        x_src = []
+        y_src = []
+        z_src = []
+        x_tgt = []
+        y_tgt = []
+        z_tgt = []
+        
+        for m in range(len(S)):
+            
+            for n in range(len(S[m].i)):
+                x_src.append(N[S[m].i[n]].X)
+                y_src.append(N[S[m].i[n]].Y)
+                z_src.append(N[S[m].i[n]].Z)
+                
+            for n in range(len(S[m].j)):
+                x_tgt.append(N[S[m].j[n]].X)
+                y_tgt.append(N[S[m].j[n]].Y)
+                z_tgt.append(N[S[m].j[n]].Z)
+        
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(x_src/b2.umetre, y_src/b2.umetre, z_src/b2.umetre, s = 10, color = 'r', marker ='^')
+        ax.scatter(x_tgt/b2.umetre, y_tgt/b2.umetre, z_tgt/b2.umetre, s = 1, color = 'k', marker ='o')
+        
+        for x_o, y_o, z_o, x_t, y_t, z_t in zip(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt):
+            ax.plot([x_o[0]/b2.umetre, x_t[0]/b2.umetre], [y_o[0]/b2.umetre, y_t[0]/b2.umetre], [z_o[0]/b2.umetre, z_t[0]/b2.umetre], color ='blue', alpha = 0.1)
+        
+   #Function to visualise connectivity of individual neurons in network and calculate distances
        #neuron_num: number of input neuron
        #synapses: synapses group
        #columnsgroup: neuron group
-    def neuron_connectivity(neuron_num, synapses, neurongroup, plot = True):
+    def single_neuron_connectivity(neuron_num, synapses, neurongroup, plot = True):
        tgt_list = []
        distances = []
+       weights = []
        
        get_indexes = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
            
        for n in range(len(synapses)):
             idxs = get_indexes(neuron_num, synapses[n].i)
+            
             tgts = [synapses[n].j[x] for x in idxs]
             tgt_list.append(tgts)
+            wgts = [synapses[n].w[x] for x in idxs]
+            weights.append(wgts)
      
        flat_tgt = [val for sublist in tgt_list for val in sublist]
+       flat_weight = [val for sublist in weights for val in sublist]
         
        x_ori = [neurongroup[neuron_num].X]
        y_ori = [neurongroup[neuron_num].Y]
@@ -379,13 +415,27 @@ class visualise():
            distances.extend(np.sqrt((x_vals[i] - x_ori[0]) ** 2 + (y_vals[i] - y_ori[0]) ** 2 + (z_vals[i] - z_ori[0]) ** 2))
         
        if plot == True:
-           ##### 3D Connectivity Plot ####
-           fig = plt.figure(figsize=(10,8))
-           ax = fig.add_subplot(111, projection='3d')
-           ax.scatter(x_vals/b2.umetre, y_vals/b2.umetre, z_vals/b2.umetre, s = 10, marker='.', alpha = 1)
-           ax.scatter(x_ori/b2.umetre, y_ori/b2.umetre, z_ori/b2.umetre, s = 20, color = 'red', marker='^', alpha = 1)
-           plt.xlabel("Distance (um)")
-           plt.ylabel("Distance (um)")
+            #### 3D Connectivity Plot ####
+             fig = plt.figure(figsize=(10,8))
+             ax = fig.add_subplot(111, projection='3d')
+             ax.scatter(x_vals/b2.umetre, y_vals/b2.umetre, z_vals/b2.umetre, s = flat_weight, color = 'k', marker='o', alpha = 1)
+             ax.scatter(x_ori/b2.umetre, y_ori/b2.umetre, z_ori/b2.umetre, s = 20, color = 'red', marker='^', alpha = 1)
+             for x, y, z in zip(x_vals, y_vals, z_vals):
+                ax.plot([x_ori[0]/b2.umetre, x[0]/b2.umetre], [y_ori[0]/b2.umetre, y[0]/b2.umetre], [z_ori[0]/b2.umetre, z[0]/b2.umetre], color ='blue', alpha = 0.3)
+             ax.set_xlabel("Distance (um)")
+             ax.set_ylabel("Distance (um)")
+             ax.set_zlabel("Distance (um)")
+             ax.set_xlim(0, 300)
+             ax.set_ylim(0, 300)
+             #ax.set_zlim(0, 300)
+            ##### 2D Connectivity Plot
+            # plt.figure(figsize=(10,8))
+            # plt.scatter(x_vals/b2.umetre, y_vals/b2.umetre,s = 10, marker='.', alpha = 1)
+            # plt.scatter(x_ori/b2.umetre, y_ori/b2.umetre, s = 20, color = 'red', marker='^', alpha = 1)
+            # for i, j, w in zip(x_vals, y_vals, flat_weight):
+            #     plt.plot([x_ori[0]/b2.umetre, i/b2.umetre], [y_ori[0]/b2.umetre, j/b2.umetre], '-b', linewidth = w, alpha = 0.2)
+            # plt.xlabel("Distance (um)")
+            # plt.ylabel("Distance (um)")
        
        return distances
        
@@ -393,7 +443,7 @@ class visualise():
     def connectivity_distances(neurongroup, synapses):
         distancearray = []
         for neuron_num in range(len(neurongroup)):
-            distancearray += visualise.neuron_connectivity(neuron_num, synapses, neurongroup, plot = False)
+            distancearray += visualise.single_neuron_connectivity(neuron_num, synapses, neurongroup, plot = False)
 
         plt.hist(distancearray, bins = 20)
         
