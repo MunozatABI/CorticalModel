@@ -93,7 +93,13 @@ class generate:
                     elif ntype[i].find('6') == 1:
                         Z.append(75)  
                         
-                    else: 
+                    elif ntype[i] == 'MPE': 
+                        Z.append(50)
+                        
+                    elif ntype[i] == 'MPI': 
+                        Z.append(100)
+                        
+                    else:
                         Z.append(0)
 
     #Define parameters according to type
@@ -190,7 +196,11 @@ class generate:
                 
             syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st))
             #syn.connect(j = 'i', p=prob[i])
-            syn.connect(p=prob[i])#j = 'i'
+            if S == True:
+                syn.connect(p=prob[i])#j = 'i'
+                
+            else:
+                syn.connect(j = 'i', p=prob[i])
             #radius = 2
             #syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/(2*(1*{})**2))'.format(prob[i], radius))
             syn.w = w[i]
@@ -295,6 +305,28 @@ def calculate_isi(spike_times, neuron_index):
         
     return isis
 
+def subgroup_idx(src_group, tgt_group):
+    source_idx = []
+    target_idx = []
+    
+    for i in range(len(src_group)):
+        if '2/3E' in src_group[i]: source_idx.append(0)
+        elif '2/3I' in src_group[i]: source_idx.append(50)
+        elif '5E' in src_group[i]: source_idx.append(75)
+        elif '5I' in src_group[i]: source_idx.append(125)
+        elif '6E' in src_group[i]: source_idx.append(125)
+        elif '6I' in src_group[i]: source_idx.append(200)
+        
+    for i in range(len(tgt_group)):
+        if '2/3E' in tgt_group[i]: target_idx.append(0)
+        elif '2/3I' in tgt_group[i]: target_idx.append(50)
+        elif '5E' in tgt_group[i]: target_idx.append(75)
+        elif '5I' in tgt_group[i]: target_idx.append(125)
+        elif '6E' in tgt_group[i]: target_idx.append(125)
+        elif '6I' in tgt_group[i]: target_idx.append(200)
+    
+    return source_idx, target_idx
+
 class visualise():
 
     #Function to plot the membrane voltage of cells
@@ -351,8 +383,6 @@ class visualise():
         #Function to visualise synapse connectivity in 3D
            #S - synapses
            #N - neurons
-           #source_subidx - array of offsets for subgrouping neurons
-           #target_subidx - array of offsets for subgrouping neurons
     def spatial_connectivity(S, N, source_subidx, target_subidx):
         x_src = []
         y_src = []
@@ -364,14 +394,14 @@ class visualise():
         for m in range(len(S)):
             
             for n in range(len(S[m].i)):
-                x_src.append(N[S[m].i[n]].X)
-                y_src.append(N[S[m].i[n]].Y)
-                z_src.append(N[S[m].i[n]].Z)
+                x_src.append(N[S[m].i[n]+source_subidx[m]].X)
+                y_src.append(N[S[m].i[n]+source_subidx[m]].Y)
+                z_src.append(N[S[m].i[n]+source_subidx[m]].Z)
                 
             for n in range(len(S[m].j)):
-                x_tgt.append(N[S[m].j[n]].X)
-                y_tgt.append(N[S[m].j[n]].Y)
-                z_tgt.append(N[S[m].j[n]].Z)
+                x_tgt.append(N[S[m].j[n]+target_subidx[m]].X)
+                y_tgt.append(N[S[m].j[n]+target_subidx[m]].Y)
+                z_tgt.append(N[S[m].j[n]+target_subidx[m]].Z)
         
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -458,12 +488,12 @@ def equation (type):
         eqs = '''
         dtheta/dt = (-1*(theta - theta_eq)
                      + C * (v - theta_eq)) / tau_theta
-                     : volt
+                     : volt (unless refractory)
         
         dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
             / (tau_m)   
             - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
-              : volt
+              : volt (unless refractory)
                       
         theta_eq : volt
         

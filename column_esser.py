@@ -28,7 +28,7 @@ warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 #################### ###########################################################
-tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 
 ##Simulation Parameters
 duration = 1500*ms     # Total simulation time
@@ -59,7 +59,7 @@ eqs += 'g_AMPAa : 1\n g_AMPAb : 1\n g_AMPAc : 1\n g_GABAAb : 1\n g_GABAAc : 1\n'
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-num_cols = 1 #2, 8, 32, 128
+num_cols = 1 #1, 2, 8, 32, 128
 columnsgroup_0 = []
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
 columnsgroup_180 = fl.generate.column(num_cols,eqs,180)
@@ -123,6 +123,8 @@ neuron_group = {'L2/3E0': columnsgroup_0[0:50*num_cols],
 Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [1], [0])
 
 src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
+
+#source_idx, target_idx = fl.subgroup_idx(src_group, tgt_group)
 
 ###############################################################################
 ########                         Monitors                               #######
@@ -424,6 +426,8 @@ ax.scatter(columnsgroup_180.X/b2.umetre, columnsgroup_180.Y/b2.umetre, columnsgr
 plt.xlabel("Distance (um)")
 plt.ylabel("Distance (um)")
 
+####3D connectivity plot ###
+#fl.visualise.spatial_connectivity(all_synapses, columnsgroup_0, source_idx, target_idx)
 
 end = time.time()
 print('Time taken:', end-start)

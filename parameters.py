@@ -7,8 +7,8 @@ Created on Tue Oct 29 11:07:25 2019
 import brian2 as b2
 from brian2 import ms, mV, um, umetre, cm, siemens, ufarad, msiemens
 
-tau1_AMPA = 0.4*ms
-tau2_AMPA = 1.5*ms
+tau1_AMPA = 0.5*ms #0.4
+tau2_AMPA = 2.4*ms #1.5
 Erev_AMPA = 0*mV
 gpeak_AMPA = 0.175
 
@@ -28,8 +28,8 @@ Erev_NMDA = 0*mV
 gpeak_NMDA = 0.1
 
 #Constants
-EK = -90*mV               # Potassium
-ENa = 60*mV               # Sodium #50
+EK = -90*mV               # Potassium #-90
+ENa = 50*mV               # Sodium #30 #60
 El = 0 * mV          # Leak -10.6mV
 gl = 0             # 0.33
 
