@@ -93,12 +93,11 @@ class generate:
                     elif ntype[i].find('6') == 1:
                         Z.append(75)  
                         
-                    elif ntype[i] == 'MPE': 
-                        Z.append(50)
+                    # elif ntype[i] == 'MPE': 
+                    #     Z.append(50)
                         
-                    elif ntype[i] == 'MPI': 
-                        Z.append(100)
-                        
+                    # elif ntype[i] == 'MPI': 
+                    #     Z.append(100)
                     else:
                         Z.append(0)
 
@@ -155,7 +154,7 @@ class generate:
         generate.initialise_neurons(ntype, num, numcol, initial_values, pref)
         neurons = b2.NeuronGroup(n, eqs,
                   threshold = 'v > theta', 
-                  reset = 'v = -65*mV; theta = -53*mV',
+                  reset = 'v = theta', #'v=-65*mV, ; theta = -53*mV''
 #                 events={'on_spike': 'v > theta'},
                   method = 'rk4',
                   refractory = 2*ms)
@@ -212,7 +211,7 @@ class generate:
     #model_synapses function generates synapses for column_esser model
     #table - table of synapse details from Esser, 2005
     #neuron_group - column of neurons representing M1, PM, SM, Thalamus
-    def model_synapses(table, neuron_group):
+    def model_synapses(table, neuron_group): #x
         all_synapses=[]
         src_group=[]
         tgt_group=[]
@@ -225,6 +224,7 @@ class generate:
                               method = 'rk4',
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
+            #syn.w = x[i]
             syn.w = (r.loc['Strength']/2)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
@@ -488,12 +488,12 @@ def equation (type):
         eqs = '''
         dtheta/dt = (-1*(theta - theta_eq)
                      + C * (v - theta_eq)) / tau_theta
-                     : volt (unless refractory)
+                     : volt
         
         dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
             / (tau_m)   
             - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
-              : volt (unless refractory)
+              : volt 
                       
         theta_eq : volt
         

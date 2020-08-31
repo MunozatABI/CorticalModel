@@ -29,7 +29,7 @@ gpeak_NMDA = 0.1
 
 #Constants
 EK = -90*mV               # Potassium #-90
-ENa = 50*mV               # Sodium #30 #60
+ENa = 60*mV               # Sodium #30 #60
 El = 0 * mV          # Leak -10.6mV
 gl = 0             # 0.33
 

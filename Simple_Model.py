@@ -33,7 +33,6 @@ simulation_time = 1000     # Total simulation time
     ##TMS Simulation
     #a = 0
     #ta = b2.TimedArray(np.hstack((np.zeros(100), a, 0))*mV, dt = 3*ms)
-
 def objective(x):
     ###############################################################################
     ########                     Neuron Equations                           #######
@@ -62,13 +61,14 @@ def objective(x):
     #Subgrouping definitions
     A = Input_Neurons[0:1] #Input Neuron 1
     B = Input_Neurons[1:2] #Input Neuron 2
-    G = Neurons[0:25] #MP Excitatory
-    H = Neurons[25:50] #L5 Excitatory
-    K = Neurons[50:75] #MP Inhibitory
+    G = Neurons[0:1] #MP Excitatory
+    H = Neurons[1:2] #L5 Excitatory
+    K = Neurons[2:3] #MP Inhibitory
     
     ###############################################################################
     ########                          Synapses                              #######
     ###############################################################################
+
     #Input_synpase definitions
     Input_syn1 = b2.Synapses(Spike1, A, '''
     dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
@@ -92,14 +92,15 @@ def objective(x):
     synapses_group.append(Input_syn1)
     synapses_group.append(Input_syn2)
     
-    Inputs = [A, G, H] ### Define Inputs here ###
+    Inputs = [A, A, A] ### Define Inputs here ###
     Targets = [G, H, K]  ### Define Targets here ###
-    prob = [0.1, 0.1, 0.1]
-    weight = x #[1, 1]
+    prob = [1, 1, 1]
+    weight = x #[1, 1, 1]
     #weight = [w_val]
     delay = [1.4, 1.4, 1.4]
     
     synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, prob, weight, delay, S=True)
+    
     ###############################################################################
     ########                         Monitors                               #######
     ###############################################################################
@@ -112,7 +113,7 @@ def objective(x):
     #SpikeMon1 = b2.SpikeMonitor(Spike1)
     #SpikeMon = b2.SpikeMonitor(G)
     #SpikeMon2 = b2.SpikeMonitor(Spike2)
-    
+        
     ###############################################################################
     ########                         Run Model                              #######
     ###############################################################################
@@ -127,7 +128,7 @@ def objective(x):
     print('Neuron K (w =',weight[2],') max V is:', np.max(M4.v/b2.mV))
     
     errors = (np.max(M1.v/b2.mV) - np.max(M2.v/b2.mV))**2 + (np.max(M1.v/b2.mV) - np.max(M3.v/b2.mV))**2 + (np.max(M1.v/b2.mV) - np.max(M4.v/b2.mV))**2
-    print(errors)
+    print('error:', errors)
     
     return errors
 ###############################################################################
@@ -151,9 +152,10 @@ bnds = (b,b,b)
 
 # fl.visualise.spatial_connectivity(synapses_group, Neurons, source_subidx, target_subidx)
 
-#fl.visualise.connectivity_distances(Neurons, synapses_group)
+# Plot distribution of distances
+# fl.visualise.connectivity_distances(Neurons, synapses_group)
 
-#Jacobian Function https://stackoverflow.com/questions/33926357/jacobian-is-required-for-newton-cg-method-when-doing-a-approximation-to-a-jaco
+# #Jacobian Function https://stackoverflow.com/questions/33926357/jacobian-is-required-for-newton-cg-method-when-doing-a-approximation-to-a-jaco
 fprime = lambda x: scipy.optimize.approx_fprime(x, objective, 0.01)
 
 sol = minimize(objective, x0, method = 'Newton-CG', jac = fprime) # bounds=bnds
