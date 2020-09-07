@@ -10,7 +10,7 @@ from brian2 import ms, mV, um, umetre, cm, siemens, ufarad, msiemens
 tau1_AMPA = 0.5*ms #0.4
 tau2_AMPA = 2.4*ms #1.5
 Erev_AMPA = 0*mV
-gpeak_AMPA = 0.175
+gpeak_AMPA = 0.1
 
 tau1_GABAA = 1*ms
 tau2_GABAA = 7*ms
@@ -29,9 +29,9 @@ gpeak_NMDA = 0.1
 
 #Constants
 EK = -90*mV               # Potassium #-90
-ENa = 60*mV               # Sodium #30 #60
-El = 0 * mV          # Leak -10.6mV
-gl = 0             # 0.33
+ENa = 30*mV               # Sodium #30 #60
+El = -10.6 * mV          # Leak -10.6mV
+gl = 0.33      # 0.33
 
 #Constant in threshold equation
 C = 0.85

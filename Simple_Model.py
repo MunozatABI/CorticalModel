@@ -16,7 +16,12 @@ import function_library as fl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import time 
+
+b2.prefs.codegen.target = 'numpy'
+#b2.set_device('cpp_standalone')
+
 b2.start_scope()
+
 start = time.time() #Running time
 
 ###############################################################################
@@ -68,11 +73,11 @@ def objective(x):
     ###############################################################################
     ########                          Synapses                              #######
     ###############################################################################
-
+    
     #Input_synpase definitions
     Input_syn1 = b2.Synapses(Spike1, A, '''
     dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
-    dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
+    dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1 (clock-driven)
     g_AMPA_post = g_AMPA_syn : 1 (summed)
     w : 1
     ''', method = 'rk4', on_pre='x_AMPA += w')    
@@ -81,7 +86,7 @@ def objective(x):
     
     Input_syn2 = b2.Synapses(Spike2, B, '''
     dg_AMPA_syn_2/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA_2-g_AMPA_syn_2)/tau1_AMPA : 1
-    dx_AMPA_2/dt =  (-x_AMPA_2/tau2_AMPA) : 1
+    dx_AMPA_2/dt =  (-x_AMPA_2/tau2_AMPA) : 1 (clock-driven)
     g_AMPA_2_post = g_AMPA_syn_2 : 1 (summed)
     w : 1
     ''', method = 'rk4', on_pre='x_AMPA_2 += w')    
@@ -92,12 +97,12 @@ def objective(x):
     synapses_group.append(Input_syn1)
     synapses_group.append(Input_syn2)
     
-    Inputs = [A, A, A] ### Define Inputs here ###
-    Targets = [G, H, K]  ### Define Targets here ###
-    prob = [1, 1, 1]
-    weight = x #[1, 1, 1]
+    Inputs = [A] ### Define Inputs here ###
+    Targets = [G]  ### Define Targets here ###
+    prob = [1]
+    weight = x #[1]
     #weight = [w_val]
-    delay = [1.4, 1.4, 1.4]
+    delay = [1.4]
     
     synapses_group = fl.generate.synapses(Inputs, Targets, Transmitters, prob, weight, delay, S=True)
     
@@ -107,8 +112,8 @@ def objective(x):
     #Monitoring membrane potentials
     M1 = b2.StateMonitor(Inputs[0], ['v', 'theta'], record=True)
     M2 = b2.StateMonitor(Targets[0], 'v', record=True)
-    M3 = b2.StateMonitor(Targets[1], 'v', record=True)
-    M4 = b2.StateMonitor(Targets[2], 'v', record=True)
+    #M3 = b2.StateMonitor(Targets[1], 'v', record=True)
+    #M4 = b2.StateMonitor(Targets[2], 'v', record=True)
     #M3 = b2.StateMonitor(Targets[1], 'v', record=True)
     #SpikeMon1 = b2.SpikeMonitor(Spike1)
     #SpikeMon = b2.SpikeMonitor(G)
@@ -122,12 +127,16 @@ def objective(x):
     net.run(simulation_time*ms) #Run simulation
     #output_rates.append(SpikeMon.num_spikes/second)
     
+    Monitors = [M2]
+    Labels = ['Input Neuron 1']
+    fl.visualise.membrane_voltage(Labels, Monitors, [0])
+    
     print('Neuron A (origin) max V is:', np.max(M1.v/b2.mV))
     print('Neuron G (w =',weight[0],') max V is:', np.max(M2.v/b2.mV))#print('Neuron H (w =',weight[1],') max V is:', np.max(M3.v/b2.mV))
-    print('Neuron H (w =',weight[1],') max V is:', np.max(M3.v/b2.mV))
-    print('Neuron K (w =',weight[2],') max V is:', np.max(M4.v/b2.mV))
-    
-    errors = (np.max(M1.v/b2.mV) - np.max(M2.v/b2.mV))**2 + (np.max(M1.v/b2.mV) - np.max(M3.v/b2.mV))**2 + (np.max(M1.v/b2.mV) - np.max(M4.v/b2.mV))**2
+    #print('Neuron H (w =',weight[1],') max V is:', np.max(M3.v/b2.mV))
+    #print('Neuron K (w =',weight[2],') max V is:', np.max(M4.v/b2.mV))
+
+    errors = (np.max(M1.v/b2.mV) - np.max(M2.v/b2.mV))**2 #+ (np.max(M1.v/b2.mV) - np.max(M3.v/b2.mV))**2 + (np.max(M1.v/b2.mV) - np.max(M4.v/b2.mV))**2
     print('error:', errors)
     
     return errors
@@ -136,8 +145,8 @@ def objective(x):
 ###############################################################################
 #plt.plot(w_range, output_rates)
     
-x0 = [0.5, 0.6, 0.7]
-#print(objective(x0))
+x0 = [1]
+print(objective(x0))
 
 b = (0.0, 1.0)
 bnds = (b,b,b)
@@ -155,11 +164,11 @@ bnds = (b,b,b)
 # Plot distribution of distances
 # fl.visualise.connectivity_distances(Neurons, synapses_group)
 
-# #Jacobian Function https://stackoverflow.com/questions/33926357/jacobian-is-required-for-newton-cg-method-when-doing-a-approximation-to-a-jaco
-fprime = lambda x: scipy.optimize.approx_fprime(x, objective, 0.01)
+# # #Jacobian Function https://stackoverflow.com/questions/33926357/jacobian-is-required-for-newton-cg-method-when-doing-a-approximation-to-a-jaco
+# fprime = lambda x: scipy.optimize.approx_fprime(x, objective, 0.01)
 
-sol = minimize(objective, x0, method = 'Newton-CG', jac = fprime) # bounds=bnds
-print(sol)
+# sol = minimize(objective, x0, method = 'Newton-CG', jac = fprime) # bounds=bnds
+# print(sol)
 
 #Plot Membrane Potential
 #Monitors = [M1]

@@ -153,8 +153,8 @@ class generate:
         initial_values = {}
         generate.initialise_neurons(ntype, num, numcol, initial_values, pref)
         neurons = b2.NeuronGroup(n, eqs,
-                  threshold = 'v > theta', 
-                  reset = 'v = theta', #'v=-65*mV, ; theta = -53*mV''
+                  threshold = 'v >= theta', 
+                  reset = 'v = theta', #'v=theta, ; theta = -53*mV''
 #                 events={'on_spike': 'v > theta'},
                   method = 'rk4',
                   refractory = 2*ms)
@@ -193,10 +193,10 @@ class generate:
             else:
                 st = chr(97 + i)
                 
-            syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st))
+            syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st), method = 'rk4')
             #syn.connect(j = 'i', p=prob[i])
             if S == True:
-                syn.connect(p=prob[i])#j = 'i'
+                syn.connect(p=prob[i])
                 
             else:
                 syn.connect(j = 'i', p=prob[i])
@@ -233,6 +233,35 @@ class generate:
             src_group.append(src)
             tgt_group.append(tgt)
         return src_group, tgt_group, all_synapses
+    
+    def model_dict_synapses(my_dict, neuron_group):
+       all_synapses_dict=[]
+       src_group_dict=[]
+       tgt_group_dict=[]
+       eqs_syn= equation('synapse')
+       for j in range(len(my_dict['SourceLayer'])):
+           src = my_dict['SourceLayer'][j] + re.sub('[()]', '', my_dict['SourceCellType'][j])
+           tgt = my_dict['TargetLayer'][j] + re.sub('[()]', '', my_dict['TargetCellType'][j])
+           syn = b2.Synapses(neuron_group[src], neuron_group[tgt],
+                             model = eqs_syn.format(tr = my_dict['Transmitter'][j],st = j),
+                             method = 'rk4',
+                             on_pre='x_{}{} += w'.format(my_dict['Transmitter'][j], j))
+           syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(my_dict['Pmax'][j],my_dict['Radius'][j])) #Gaussian connectivity profile
+           syn.w = (my_dict['Strength'][j]/2)  #Weights scaled to match Iriki et al., 1991
+           syn.delay = my_dict['MeanDelay'][j]*ms
+           #post.delay = '{}*ms'.format(,r.loc['VCond'])
+           #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
+           all_synapses_dict.append(syn)
+           src_group_dict.append(src)
+           tgt_group_dict.append(tgt)
+       return src_group_dict, tgt_group_dict, all_synapses_dict
+    
+    def poissonspikes(num1, num2, duration):
+        THA = np.random.uniform(10, 20, num1)
+        PMSI = np.ones(num2)
+        rates = np.hstack([THA, PMSI])
+        P = b2.PoissonGroup(num1 + num2, [rates]*b2.hertz)
+        return P
     
     #spikegen function generates spikes
     #num - number of spiking neurons
@@ -493,7 +522,7 @@ def equation (type):
         dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
             / (tau_m)   
             - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
-              : volt 
+              : volt
                       
         theta_eq : volt
         

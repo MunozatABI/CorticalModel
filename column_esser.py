@@ -23,13 +23,17 @@ from parameters import *
 import warnings
 import collections
 
+b2.prefs.codegen.target = 'numpy'
+
 b2.start_scope() #clear variables
 start = time.time() #Running time
 warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 #################### ###########################################################
-tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+
+dict1 = tab1.to_dict("list")
 
 # x0 = []
 # for i, r in tab1.iterrows():
@@ -89,7 +93,7 @@ T_R = int((in_num[0]/3) * 2)
 PM_SI = int(in_num[0]/3)
 
 t5 = time.time()
-Spike = fl.generate.spikes(T_R, PM_SI, duration)
+Spike = fl.generate.poissonspikes(T_R, PM_SI, duration)
 t6 = time.time()
 print('Time for spike generation:', t6-t5)
 
@@ -144,9 +148,10 @@ Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [
 t8 = time.time()
 print('Time for input synapse generation:', t8-t7)
 
-#src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group, x)
+
 t9 = time.time()
-src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
+#src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
+src_group_dict, tgt_group_dict, all_synapses_dict = fl.generate.model_dict_synapses(dict1, neuron_group)
 t10 = time.time()
 print('Time for synapse generation:', t10-t9)
 #source_idx, target_idx = fl.subgroup_idx(src_group, tgt_group)
@@ -174,12 +179,14 @@ print('Time for spikemonitor definition:', t12-t11)
 ########                         Run Model                              #######
 ###############################################################################
 net = b2.Network(b2.collect())  #Automatically add visible objects 
-net.add(Input_synapses, all_synapses)           #Manually add list of synapses # TMS_synapse_0, TMS_synapse_180
+net.add(Input_synapses, all_synapses_dict)           #Manually add list of synapses # TMS_synapse_0, TMS_synapse_180
 
 t13 = time.time()
-net.run(duration) #Run
+net.run(duration, profile = True) #Run
 t14 = time.time()
 print('Run Time:', t14 - t13)
+
+print(b2.profiling_summary(net = net, show = 10))
 
 # L23E_output_rates.append(spikemonL23E.num_spikes)
 # L23I_output_rates.append(spikemonL23I.num_spikes)
