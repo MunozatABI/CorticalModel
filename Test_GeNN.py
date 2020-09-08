@@ -10,6 +10,11 @@ from brian2 import *
 import brian2genn
 
 set_device('genn')
+
+devices.genn.cuda_backend.cuda_path = "/usr/lib/cuda"
+
+devices.genn.path = "home/lyseam/genn"
+
 n = 1000
 duration = 1*second
 tau = 10*ms
