@@ -11,9 +11,9 @@ import brian2genn
 
 set_device('genn')
 
-devices.genn.cuda_backend.cuda_path = "/usr/lib/cuda"
+brian2genn.devices.genn.cuda_backend.cuda_path = "/usr/lib/cuda"
 
-devices.genn.path = "home/lyseam/genn"
+brian2genn.devices.genn.path = "home/lyseam/genn"
 
 n = 1000
 duration = 1*second
