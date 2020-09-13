@@ -51,10 +51,10 @@ def observation(weight, goal):
     return error ### This has to return a value that I want to match with the model output
 
 #Define UKF
-#ukf = UnscentedKalmanFilter(f, g, observation_covariance=0.1)
-ukf = UnscentedKalmanFilter(model, observation, observation_covariance=0.1)
+ukf = UnscentedKalmanFilter(f, g, observation_covariance=0.1)
+#ukf = UnscentedKalmanFilter(model, observation, observation_covariance=0.1)
 
 #Run UKF, with Z(t) observations and return the means and covariances of state distributions over time t
-#(filtered_state_means, filtered_state_covariances) = ukf.filter([0, 1, 2])
-#(smoothed_state_means, smoothed_state_covariances) = ukf.smooth([0, 1, 2]) # Apply smoother
-(filtered_state_means, filtered_state_covariances) = ukf.filter([100])
+(filtered_state_means, filtered_state_covariances) = ukf.filter([0, 1, 2]) #Returns means - values of x which match f to g; and covariances variability
+(smoothed_state_means, smoothed_state_covariances) = ukf.smooth([0, 1, 2]) # Applies smoother
+#(filtered_state_means, filtered_state_covariances) = ukf.filter([100])

@@ -106,16 +106,16 @@ class generate:
                     if ntype[i] == 'MPE' or ntype[i] == 'L3E' or ntype[i] == 'L6E':
                         theta_eq.append(-53)
                         tau_theta.append(2.0)
-                        tau_spike.append(1.75)
+                        tau_spike.append(1.75) 
                         t_spike.append(2.0)
-                        tau_m.append(15)
+                        tau_m.append(15) 
                         g_Na.append(0.14)
                         g_K.append(1.0)
                         
                     elif ntype[i] == 'L5E':
                         theta_eq.append(-53)
                         tau_theta.append(0.5)
-                        tau_spike.append(0.6)
+                        tau_spike.append(0.6) 
                         t_spike.append(0.75)
                         tau_m.append(13)
                         g_Na.append(0.14)
@@ -124,9 +124,9 @@ class generate:
                     elif ntype[i] == 'MPI' or ntype[i] == 'THA' or ntype[i] == 'L3I' or ntype[i] == 'L5I' or ntype[i] == 'L6I':
                         theta_eq.append(-54)
                         tau_theta.append(1.0)
-                        tau_spike.append(0.48)
-                        t_spike.append(0.75)
-                        tau_m.append(7)
+                        tau_spike.append(0.48) 
+                        t_spike.append(0.48) 
+                        tau_m.append(5) 
                         g_Na.append(0.2)
                         g_K.append(1.0)
                 
@@ -153,11 +153,11 @@ class generate:
         initial_values = {}
         generate.initialise_neurons(ntype, num, numcol, initial_values, pref)
         neurons = b2.NeuronGroup(n, eqs,
-                  threshold = 'v >= theta', 
-                  reset = 'v = theta', #'v=theta, ; theta = -53*mV''
+                  threshold = 'v > theta', 
+                  #reset = 'v = theta_eq', #v=theta, ; theta = -53*mV''
 #                 events={'on_spike': 'v > theta'},
                   method = 'rk4',
-                  refractory = 2*ms)
+                  refractory = 'v >theta')
         neurons.set_states(initial_values)
         neurons.v = -65*mV
         #neurons.v = neurons.theta_eq #initialise resting potential
@@ -225,7 +225,7 @@ class generate:
                               on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
             #syn.w = x[i]
-            syn.w = (r.loc['Strength']/2)  #Weights scaled to match Iriki et al., 1991
+            syn.w = (r.loc['Strength']/10)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))

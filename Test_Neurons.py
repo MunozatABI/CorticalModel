@@ -59,7 +59,7 @@ gpeak_NMDA = 0.1
 ###############################################################################
 ########                     Neuron Equations                           #######
 ###############################################################################
-Transmitters = ['AMPA', 'AMPA']
+Transmitters = ['AMPA', 'AMPA', 'AMPA']
 
 ###Equation Definitions
 ###From Esser, et al., 2005
@@ -90,48 +90,32 @@ gK : 1
 
 '''
 
-thalamus_eqs = eqs + 'I_syn = (v - Erev_AMPA) * g_AMPA : volt\n g_AMPA : 1\n'
-
-eqs += 'I_syn = ' + ' + '.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
-eqs += ''.join(['g_{}{} : 1\n'.format(Transmitters[i], i) for i in range(len(Transmitters))])
+eqs += 'I_syn = (v - Erev_AMPA) * g_AMPA + ' + ' + '.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
+eqs += 'g_AMPA : 1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitters[i], i) for i in range(len(Transmitters))])
 
 #initialise variables
-initial_values = {'theta_eq': [-53, -53, -54]*mV,            #resting threshold
-                   'tau_theta': [2.0, 0.5, 1]*ms,              #threshold time constant
-                   'tau_spike': [1.75, 0.6, 0.48]*ms,        #time constant during spike 0.48, 1.75, 1.75
-                   't_spike': [2, 0.75, 0.75]*ms,          #length of time of spike
-                   'tau_m': [15, 13, 7]*ms,                  #membrane time constant
-                   'gNa': [0.14, 0.14, 0.2],                 #sodium leak
-                   'gK': [1.0, 1.3, 1.0]}                 #potassium leak
+initial_values = {'theta_eq': [-54, -53, -53, -54]*mV,            #resting threshold
+                   'tau_theta': [1.0, 2.0, 0.5, 1.0]*ms,              #threshold time constant
+                   'tau_spike': [0.48, 1.75, 0.6, 0.48]*ms,        #time constant during spike 
+                   't_spike': [0.75, 2, 0.75, 0.75]*ms,          #length of time of spike
+                   'tau_m': [7, 15, 13, 7]*ms,                  #membrane time constant 
+                   'gNa': [0.2, 0.14, 0.14, 0.2],                 #sodium leak
+                   'gK': [1.0, 1.0, 1.3, 1.0]}                 #potassium leak
 
-thalamus = b2.NeuronGroup(1, thalamus_eqs,
-                          threshold = 'v>=theta',
-                          reset = 'v = theta',
-                          method = 'rk4',
-                          refractory = 14*ms)
-
-thalamus.theta_eq = -54*mV
-thalamus.tau_theta = 1*ms
-thalamus.tau_spike = 0.1*ms
-thalamus.t_spike = 0.75*ms
-thalamus.tau_m = 1*ms
-thalamus.gNa = 0.2
-thalamus.gK = 1.0
-
-neurons = b2.NeuronGroup(3, eqs,
-          threshold = 'v >= theta', 
-          reset = 'v = theta',
+neurons = b2.NeuronGroup(4, eqs,
+          threshold = 'v > theta', 
+#          reset = 'v = theta_eq',
           method = 'rk4',
-          refractory = 14*ms)
+          refractory = 'v > theta')
 
 neurons.set_states(initial_values)
 
 neurons.v = neurons.theta_eq #initialise resting potential
 
-Thalamus = thalamus[0:1]
-MPE = neurons[0:1]
-MP5 = neurons[1:2]
-MPI = neurons[2:3]
+Thalamus = neurons[0:1]
+MPE = neurons[1:2]
+MP5 = neurons[2:3]
+MPI = neurons[3:4]
 
 #Spiking Input Neurons
 Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms) 
@@ -159,19 +143,21 @@ eqs_syn= '''
     w : 1
     '''
 
-Inputs = [Thalamus, Thalamus]
+Inputs = [Thalamus, Thalamus, Thalamus]
 Targets = [MPE, MP5, MPI]
 
 ##Putting Synapses into a list structure
 for i in range(len(Inputs)):
     syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = i), on_pre='x_{}{} += w'.format(Transmitters[i], i))
     syn.connect(p=1)
-    syn.w = 0.01
+    syn.w = 0.1
     synapses_group.append(syn)
 
 ###############################################################################
 ########                         Monitors                               #######
 ###############################################################################
+S1 = b2.SpikeMonitor(Thalamus, variables='v')
+M_test = b2.StateMonitor(neurons, ['v'], record = True)
 M1 = b2.StateMonitor(Thalamus, ['v', 'theta'], record=True)
 M2 = b2.StateMonitor(MPE, ['v', 'theta'], record=True)
 M3 = b2.StateMonitor(MP5, ['v', 'theta'], record=True)
@@ -187,17 +173,22 @@ net.run(simulation_time*ms, profile = True)
 net.profiling_info
 print(b2.profiling_summary(net = net, show = 10))
 
-#Plotting 3 neurons
-fig, ax = plt.subplots(4, 1, figsize=(12,16), sharex = True)
+plt.figure()
+plt.plot(M1.t[4800:5500]/b2.ms, M1.v[0][4800:5500], 'C0-', label='THA')
+plt.plot(M1.t[4800:5500]/b2.ms, M1.theta[0][4800:5500], 'C1.', label='theta')
+plt.plot(S1.t/b2.ms, S1.i, 'ob')
 
-ax[0].plot(M1.t[4000:6000]/b2.ms, M1.v[0][4000:6000], 'C0-', label='THA')
-ax[0].plot(M1.t[4000:6000]/b2.ms, M1.theta[0][4000:6000], 'C1.', label='theta')
-ax[1].plot(M2.t[4000:6000]/b2.ms, M2.v[0][4000:6000], 'C2-', label='MPE')
-ax[1].plot(M2.t[4000:6000]/b2.ms, M2.theta[0][4000:6000], 'C1.', label='theta')
-ax[2].plot(M3.t[4000:6000]/b2.ms, M3.v[0][4000:6000], 'C3-', label='MP5')
-ax[2].plot(M3.t[4000:6000]/b2.ms, M3.theta[0][4000:6000], 'C1.', label='theta')
-ax[3].plot(M4.t[4000:6000]/b2.ms, M3.v[0][4000:6000], 'C3-', label='MPI')
-ax[3].plot(M4.t[4000:6000]/b2.ms, M3.theta[0][4000:6000], 'C1.', label='theta')
-ax[3].set_xlabel('Time (ms)')
-ax[3].set_ylabel('v')
-plt.legend();
+#Plotting 3 neurons
+# fig, ax = plt.subplots(4, 1, figsize=(12,16), sharex = True)
+
+# ax[0].plot(M1.t[4000:6000]/b2.ms, M1.v[0][4000:6000], 'C0-', label='THA')
+# ax[0].plot(M1.t[4000:6000]/b2.ms, M1.theta[0][4000:6000], 'C1.', label='theta')
+# ax[1].plot(M2.t[4000:6000]/b2.ms, M2.v[0][4000:6000], 'C2-', label='MPE')
+# ax[1].plot(M2.t[4000:6000]/b2.ms, M2.theta[0][4000:6000], 'C1.', label='theta')
+# ax[2].plot(M3.t[4000:6000]/b2.ms, M3.v[0][4000:6000], 'C3-', label='MP5')
+# ax[2].plot(M3.t[4000:6000]/b2.ms, M3.theta[0][4000:6000], 'C1.', label='theta')
+# ax[3].plot(M4.t[4000:6000]/b2.ms, M3.v[0][4000:6000], 'C3-', label='MPI')
+# ax[3].plot(M4.t[4000:6000]/b2.ms, M3.theta[0][4000:6000], 'C1.', label='theta')
+# ax[3].set_xlabel('Time (ms)')
+# ax[3].set_ylabel('v')
+# plt.legend();
