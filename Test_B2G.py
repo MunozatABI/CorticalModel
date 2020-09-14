@@ -73,7 +73,7 @@ dtheta/dt = (-1*(theta - theta_eq)
              + C * (v - theta_eq)) / tau_theta
              : volt
 
-I_syn = (v - Erev_AMPA) * g_AMPA
+I_syn = (v - Erev_AMPA) * g_AMPA : volt
 
 dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
         / tau_m    
