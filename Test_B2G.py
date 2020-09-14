@@ -77,6 +77,10 @@ dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
         / tau_m    
         - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
               : volt
+              
+dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
+
+dg_AMPA/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
 
 theta_eq : volt
 
@@ -129,11 +133,8 @@ Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms)
 ###############################################################################
 
 Input_syn1 = b2.Synapses(Spike1, Thalamus, '''
-dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
-dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
-g_AMPA_post = g_AMPA_syn : 1
 w : 1
-''', on_pre='x_AMPA += w')    
+''', on_pre='x_AMPA_post += w')    
 Input_syn1.connect(p = 1)
 Input_syn1.w = 1
 
