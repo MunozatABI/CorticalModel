@@ -131,7 +131,7 @@ Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms)
 Input_syn1 = b2.Synapses(Spike1, Thalamus, '''
 dg_AMPA_syn/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
 dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1 (clock-driven)
-g_AMPA_post = g_AMPA_syn : 1 (summed)
+g_AMPA_post = g_AMPA_syn : 1
 w : 1
 ''', on_pre='x_AMPA += w')    
 Input_syn1.connect(p = 1)
@@ -143,7 +143,7 @@ synapses_group.append(Input_syn1)
 eqs_syn= '''
     dg_{tr}_syn{st}/dt = ((tau2_{tr} / tau1_{tr}) ** (tau1_{tr} / (tau2_{tr} - tau1_{tr}))*x_{tr}{st}-g_{tr}_syn{st})/tau1_{tr} : 1
     dx_{tr}{st}/dt =  (-x_{tr}{st}/tau2_{tr}) : 1
-    g_{tr}{st}_post = g_{tr}_syn{st} : 1 (summed)
+    g_{tr}{st}_post = g_{tr}_syn{st} : 1
     w : 1
     '''
 
@@ -173,7 +173,7 @@ M4 = b2.StateMonitor(MPI, ['v', 'theta'], record=True)
 ###############################################################################
 net = b2.Network(b2.collect())  #Automatically add visible objects 
 net.add(synapses_group)           #Manually add list of synapses
-net.run(simulation_time*ms, profile = True)
+net.run(simulation_time*b2.ms, profile = True)
 net.profiling_info
 print(b2.profiling_summary(net = net, show = 10))
 
