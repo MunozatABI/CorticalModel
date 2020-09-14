@@ -73,6 +73,8 @@ dtheta/dt = (-1*(theta - theta_eq)
              + C * (v - theta_eq)) / tau_theta
              : volt
 
+I_syn = (v - Erev_AMPA) * g_AMPA
+
 dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
         / tau_m    
         - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
@@ -98,7 +100,7 @@ gK : 1
 
 '''
 
-eqs += 'I_syn = (v - Erev_AMPA) * g_AMPA + ' + ' + '.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
+#eqs += 'I_syn = (v - Erev_AMPA) * g_AMPA + ' + ' + '.join(['(v - Erev_{}) * g_{}{}'.format(Transmitters[i],Transmitters[i],i) for i in range(len(Transmitters))]) + ' : volt\n'
 #eqs += 'g_AMPA : 1\n' + ''.join(['g_{}{} : 1\n'.format(Transmitters[i], i) for i in range(len(Transmitters))])
 
 #initialise variables
