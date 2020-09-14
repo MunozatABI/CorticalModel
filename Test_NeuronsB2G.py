@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep 14 13:10:11 2020
+Created on Tue Sep 15 10:02:24 2020
 
 @author: lmun373
 """
-
 ###############################################################################
 ########                   Import Libraries                             #######
 ###############################################################################
@@ -14,11 +13,8 @@ import numpy as np
 import time
 import function_library as fl
 import matplotlib.pyplot as plt
-import brian2genn
 
 from mpl_toolkits.mplot3d import Axes3D 
-
-set_device('genn')
 
 b2.start_scope()
 
@@ -147,7 +143,32 @@ Spike1 = b2.SpikeGeneratorGroup(1, [0], [500]*ms)
 ########                          Synapses                              #######
 ###############################################################################
 
+# Input_syn1 = b2.Synapses(Spike1, Thalamus, '''
+# w : 1
+# ''', on_pre='x_AMPA_post += w')    
+# Input_syn1.connect(p = 1)
+# Input_syn1.w = 1
+
+# Input_syn2 = b2.Synapses(Spike1, MPE, '''
+# w : 1
+# ''', on_pre='x_AMPA_post += w')    
+# Input_syn2.connect(p = 1)
+# Input_syn2.w =1
+
+# Syn1 = b2.Synapses(Thalamus, MP5, '''
+# w : 1
+# ''', on_pre='x_AMPA_post += w')    
+# Syn1.connect(p = 1)
+# Syn1.w = 0.3
+
+# Syn2 = b2.Synapses(MPE, MP5, '''
+# w : 1
+# ''', on_pre='x_AMPA_post += w')    
+# Syn2.connect(p = 1)
+# Syn2.w = 0.3
+
 synapses_group = []
+#synapses_group.append(Input_syn1)
 
 eqs_syn= '''
     w : 1
@@ -193,22 +214,22 @@ print('Max V in MPI:', np.max(M4.v[0][4000:6000]))
 for k in range(len(S1.i)):
     print('Spike in neuron', S1.i[k], 'at time', S1.t[k])
 
-#plt.figure()
-#plt.plot(M1.t[4800:5500]/b2.ms, M1.v[0][4800:5500], 'C0-', label='THA')
-#plt.plot(M1.t[4800:5500]/b2.ms, M1.theta[0][4800:5500], 'C1.', label='theta')
-#plt.plot(S1.t/b2.ms, S1.i, 'ob')
+# plt.figure()
+# plt.plot(M1.t[4800:5500]/b2.ms, M1.v[0][4800:5500], 'C0-', label='THA')
+# plt.plot(M1.t[4800:5500]/b2.ms, M1.theta[0][4800:5500], 'C1.', label='theta')
+# plt.plot(S1.t/b2.ms, S1.i, 'ob')
 
-#Plotting 3 neurons
-# fig, ax = plt.subplots(4, 1, figsize=(12,16), sharex = True)
+#####Plotting 3 neurons
+fig, ax = plt.subplots(4, 1, figsize=(12,16), sharex = True)
 
-# ax[0].plot(M1.t[4000:6000]/b2.ms, M1.v[0][4000:6000], 'C0-', label='THA')
-# ax[0].plot(M1.t[4000:6000]/b2.ms, M1.theta[0][4000:6000], 'C1.', label='theta')
-# ax[1].plot(M2.t[4000:6000]/b2.ms, M2.v[0][4000:6000], 'C2-', label='MPE')
-# ax[1].plot(M2.t[4000:6000]/b2.ms, M2.theta[0][4000:6000], 'C1.', label='theta')
-# ax[2].plot(M3.t[4000:6000]/b2.ms, M3.v[0][4000:6000], 'C3-', label='MP5')
-# ax[2].plot(M3.t[4000:6000]/b2.ms, M3.theta[0][4000:6000], 'C1.', label='theta')
-# ax[3].plot(M4.t[4000:6000]/b2.ms, M3.v[0][4000:6000], 'C3-', label='MPI')
-# ax[3].plot(M4.t[4000:6000]/b2.ms, M3.theta[0][4000:6000], 'C1.', label='theta')
-# ax[3].set_xlabel('Time (ms)')
-# ax[3].set_ylabel('v')
-# plt.legend();
+ax[0].plot(M1.t[4000:6000]/b2.ms, M1.v[0][4000:6000], 'C0-', label='THA')
+ax[0].plot(M1.t[4000:6000]/b2.ms, M1.theta[0][4000:6000], 'C1.', label='theta')
+ax[1].plot(M2.t[4000:6000]/b2.ms, M2.v[0][4000:6000], 'C2-', label='MPE')
+ax[1].plot(M2.t[4000:6000]/b2.ms, M2.theta[0][4000:6000], 'C1.', label='theta')
+ax[2].plot(M3.t[4000:6000]/b2.ms, M3.v[0][4000:6000], 'C3-', label='MP5')
+ax[2].plot(M3.t[4000:6000]/b2.ms, M3.theta[0][4000:6000], 'C1.', label='theta')
+ax[3].plot(M4.t[4000:6000]/b2.ms, M4.v[0][4000:6000], 'C3-', label='MPI')
+ax[3].plot(M4.t[4000:6000]/b2.ms, M4.theta[0][4000:6000], 'C1.', label='theta')
+ax[3].set_xlabel('Time (ms)')
+ax[3].set_ylabel('v')
+plt.legend();
