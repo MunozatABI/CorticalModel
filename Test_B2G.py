@@ -9,8 +9,7 @@ Created on Mon Sep 14 13:10:11 2020
 ########                   Import Libraries                             #######
 ###############################################################################
 import brian2 as b2
-from brian2 import mV, ms, ufarad, cm, umetre, volt, second
-from brian2 import mV, ms, ufarad, cm, umetre, volt, second, msiemens, siemens, nS, pA
+from brian2 import *
 import numpy as np
 import time
 import function_library as fl
