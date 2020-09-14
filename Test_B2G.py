@@ -80,7 +80,7 @@ dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
               
 dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
 
-dg_AMPA/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA_syn)/tau1_AMPA : 1
+dg_AMPA/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA)/tau1_AMPA : 1
 
 theta_eq : volt
 
