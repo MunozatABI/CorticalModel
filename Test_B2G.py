@@ -174,9 +174,7 @@ M4 = b2.StateMonitor(MPI, ['v', 'theta'], record=True)
 ###############################################################################
 net = b2.Network(b2.collect())  #Automatically add visible objects 
 #net.add(synapses_group)           #Manually add list of synapses
-net.run(simulation_time*b2.ms, profile = True)
-net.profiling_info
-print(b2.profiling_summary(net = net, show = 10))
+net.run(simulation_time*b2.ms)
 
 stop = time.time()
 
