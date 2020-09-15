@@ -9,7 +9,7 @@ Created on Wed Sep 16 09:49:38 2020
 ###############################################################################
 
 import brian2 as b2
-from brian2 import mV, ms
+from brian2 import mV, ms, set_device
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import cm
