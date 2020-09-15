@@ -25,6 +25,7 @@ import parameters
 from parameters import *
 import warnings
 import collections
+import brian2genn
 
 set_device('genn')
 
