@@ -195,7 +195,7 @@ class generate:
                 st = chr(97 + i)
                 
             #syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st), method = 'rk4')
-            syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn, on_pre='x_{}_post += w'.format(Transmitters[i]), method = 'rk4')
+            syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn, on_pre='x_{}_post += w'.format(Transmitters[i]), delay = delay[i]*ms, method = 'rk4')
             #syn.connect(j = 'i', p=prob[i])
             if S == True:
                 syn.connect(p=prob[i])
@@ -205,7 +205,7 @@ class generate:
             #radius = 2
             #syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/(2*(1*{})**2))'.format(prob[i], radius))
             syn.w = w[i]
-            syn.delay = delay[i]*ms
+            #syn.delay = delay[i]*ms
             synapses_group.append(syn)
             
         return synapses_group    
@@ -226,12 +226,13 @@ class generate:
                               #model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
                               model = eqs_syn,
                               method = 'rk4',
+                              delay = r.loc['MeanDelay']*ms,
                               #on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
                               on_pre='x_{}_post += w'.format(r.loc['Transmitter']))
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
             #syn.w = x[i]
             syn.w = (r.loc['Strength']/6)  #Weights scaled to match Iriki et al., 1991
-            syn.delay = r.loc['MeanDelay']*ms
+            #syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
             all_synapses.append(syn)
