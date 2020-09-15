@@ -184,7 +184,8 @@ class generate:
     #delay - delay
     def synapses(Inputs, Targets, Transmitters, prob, w, delay, S = None):
         synapses_group = []
-        eqs_syn= equation('synapse')
+        #eqs_syn= equation('synapse')
+        eqs_syn= equation('b2genn_synapse')
 
         for i in range(len(Inputs)):
             
@@ -193,7 +194,8 @@ class generate:
             else:
                 st = chr(97 + i)
                 
-            syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st), method = 'rk4')
+            #syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = st), on_pre='x_{}{} += w'.format(Transmitters[i], st), method = 'rk4')
+            syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn, on_pre='x_{}_post += w'.format(Transmitters[i]), method = 'rk4')
             #syn.connect(j = 'i', p=prob[i])
             if S == True:
                 syn.connect(p=prob[i])
@@ -215,17 +217,20 @@ class generate:
         all_synapses=[]
         src_group=[]
         tgt_group=[]
-        eqs_syn= equation('synapse')
+        #eqs_syn= equation('synapse')
+        eqs_syn = equation('b2genn_synapse')
         for i, r in table.iterrows():
             src = r.loc['SourceLayer'] + re.sub('[()]', '', r.loc['SourceCellType'])
             tgt = r.loc['TargetLayer'] + re.sub('[()]', '', r.loc['TargetCellType'])
             syn = b2.Synapses(neuron_group[src], neuron_group[tgt],
-                              model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
+                              #model = eqs_syn.format(tr = r.loc['Transmitter'],st = i),
+                              model = eqs_syn,
                               method = 'rk4',
-                              on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
+                              #on_pre='x_{}{} += w'.format(r.loc['Transmitter'], i))
+                              on_pre='x_{}_post += w'.format(r.loc['Transmitter']))
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
             #syn.w = x[i]
-            syn.w = (r.loc['Strength']/10)  #Weights scaled to match Iriki et al., 1991
+            syn.w = (r.loc['Strength']/6)  #Weights scaled to match Iriki et al., 1991
             syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
@@ -545,6 +550,57 @@ def equation (type):
         Z : meter
         '''
         
+    elif type == 'b2genn':
+        eqs = '''
+        dtheta/dt = (-1*(theta - theta_eq)
+                     + C * (v - theta_eq)) / tau_theta
+                     : volt
+        
+        I_syn = (v - Erev_AMPA) * g_AMPA + (v - Erev_NMDA) * g_NMDA + (v - Erev_GABAA) * g_GABAA + (v - Erev_GABAB) * g_GABAB : volt
+        
+        dv/dt = ((-gNa*(v-ENa) - gK*(v-EK) - I_syn - gl*(v-El)))
+                / tau_m    
+                - int(v > theta) * int(t < (lastspike + t_spike)) * ((v - ENa) / (tau_spike))
+                      : volt
+                      
+        dx_AMPA/dt =  (-x_AMPA/tau2_AMPA) : 1
+        
+        dg_AMPA/dt = ((tau2_AMPA / tau1_AMPA) ** (tau1_AMPA / (tau2_AMPA - tau1_AMPA))*x_AMPA-g_AMPA)/tau1_AMPA : 1
+        
+        dx_NMDA/dt =  (-x_NMDA/tau2_NMDA) : 1
+        
+        dg_NMDA/dt = ((tau2_NMDA / tau1_NMDA) ** (tau1_NMDA / (tau2_NMDA - tau1_NMDA))*x_NMDA-g_NMDA)/tau1_NMDA : 1
+        
+        dx_GABAA/dt =  (-x_GABAA/tau2_GABAA) : 1
+        
+        dg_GABAA/dt = ((tau2_GABAA / tau1_GABAA) ** (tau1_GABAA / (tau2_GABAA - tau1_GABAA))*x_GABAA-g_GABAA)/tau1_GABAA : 1
+        
+        dx_GABAB/dt =  (-x_GABAB/tau2_GABAB) : 1
+        
+        dg_GABAB/dt = ((tau2_GABAB / tau1_GABAB) ** (tau1_GABAB / (tau2_GABAB- tau1_GABAB))*x_GABAB-g_GABAB)/tau1_AMPA : 1
+        
+        theta_eq : volt
+        
+        tau_theta : second
+        
+        tau_spike : second
+        
+        t_spike : second
+        
+        tau_m : second
+        
+        gNa : 1
+        
+        gK : 1
+                 
+        X : meter
+        
+        Y : meter
+        
+        Z : meter
+        
+        '''
+        
     elif type == 'test':
 
         eqs = '''
@@ -742,4 +798,10 @@ def equation (type):
         eqs = '''
         dv/dt = -v/(10*ms) : volt
         '''
+        
+    elif type =='b2genn_synapse':
+        eqs = '''
+        w : 1
+        '''
     return eqs
+

@@ -173,14 +173,14 @@ synapses_group = []
 eqs_syn= '''
     w : 1
     '''
-Inputs = [Spike1, Spike1, Thalamus, MPE]
-Targets = [Thalamus, MPE, MP5, MP5]
-Weights = [1, 1, 0.3, 0.3]
-Transmitters = ['AMPA', 'AMPA', 'AMPA', 'AMPA']
+Inputs = [Spike1, Spike1, Thalamus]
+Targets = [Thalamus, MPE, MP5]
+Weights = [1, 1, 0.3]
+Transmitters = ['AMPA', 'AMPA', 'AMPA']
 
 ##Putting Synapses into a list structure
 for i in range(len(Inputs)):
-    syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = i), on_pre='x_{} += w'.format(Transmitters[i]))
+    syn = b2.Synapses(Inputs[i], Targets[i], eqs_syn.format(tr = Transmitters[i],st = i), on_pre='x_{}_post += w'.format(Transmitters[i]))
     syn.connect(p=1)
     syn.w = Weights[i]
     synapses_group.append(syn)

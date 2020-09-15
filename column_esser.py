@@ -66,9 +66,10 @@ sim_dt = 0.1*ms           # Integrator/sampling step
 ###############################################################################
 ########                     Neuron Equations                           #######
 ###############################################################################
-eqs = fl.equation('current')
-eqs += 'I_syn = (v - Erev_AMPA)*g_AMPAa + (v - Erev_AMPA)*g_AMPAb + (v - Erev_AMPA)*g_AMPAc + (v - Erev_AMPA)*g_GABAAb + (v - Erev_AMPA)*g_GABAAc +' + '+'.join(['(v - Erev_{}) * g_{}{}'.format(r.loc['Transmitter'],r.loc['Transmitter'],i) for i,r in tab1.iterrows()]) + ' : volt\n'
-eqs += 'g_AMPAa : 1\n g_AMPAb : 1\n g_AMPAc : 1\n g_GABAAb : 1\n g_GABAAc : 1\n' + ''.join(['g_{}{} : 1\n'.format(r.loc['Transmitter'], i) for i,r in tab1.iterrows()])
+eqs = fl.equation('b2genn')
+
+#eqs += 'I_syn = (v - Erev_AMPA)*g_AMPAa + (v - Erev_AMPA)*g_AMPAb + (v - Erev_AMPA)*g_AMPAc + (v - Erev_AMPA)*g_GABAAb + (v - Erev_AMPA)*g_GABAAc +' + '+'.join(['(v - Erev_{}) * g_{}{}'.format(r.loc['Transmitter'],r.loc['Transmitter'],i) for i,r in tab1.iterrows()]) + ' : volt\n'
+#eqs += 'g_AMPAa : 1\n g_AMPAb : 1\n g_AMPAc : 1\n g_GABAAb : 1\n g_GABAAc : 1\n' + ''.join(['g_{}{} : 1\n'.format(r.loc['Transmitter'], i) for i,r in tab1.iterrows()])
 
 ###############################################################################
 ########                      Create Neurons                            #######
@@ -150,8 +151,8 @@ print('Time for input synapse generation:', t8-t7)
 
 
 t9 = time.time()
-#src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
-src_group_dict, tgt_group_dict, all_synapses_dict = fl.generate.model_dict_synapses(dict1, neuron_group)
+src_group, tgt_group, all_synapses = fl.generate.model_synapses(tab1, neuron_group)
+#src_group_dict, tgt_group_dict, all_synapses_dict = fl.generate.model_dict_synapses(dict1, neuron_group)
 t10 = time.time()
 print('Time for synapse generation:', t10-t9)
 #source_idx, target_idx = fl.subgroup_idx(src_group, tgt_group)
@@ -179,7 +180,7 @@ print('Time for spikemonitor definition:', t12-t11)
 ########                         Run Model                              #######
 ###############################################################################
 net = b2.Network(b2.collect())  #Automatically add visible objects 
-net.add(Input_synapses, all_synapses_dict)           #Manually add list of synapses # TMS_synapse_0, TMS_synapse_180
+net.add(Input_synapses, all_synapses)           #Manually add list of synapses # TMS_synapse_0, TMS_synapse_180
 
 t13 = time.time()
 net.run(duration, profile = True) #Run
