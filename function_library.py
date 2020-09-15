@@ -594,11 +594,11 @@ def equation (type):
         
         gK : 1
                  
-        X : meter
+        X : 1
         
-        Y : meter
+        Y : 1
         
-        Z : meter
+        Z : 1
         
         '''
         
