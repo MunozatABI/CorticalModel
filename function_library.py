@@ -137,9 +137,9 @@ class generate:
         dict["tau_m"] = tau_m*ms
         dict["gNa"] = g_Na
         dict["gK"] = g_K
-        dict['X'] = X*um
-        dict['Y'] = Y*um
-        dict['Z'] = Z*um      
+        dict['X'] = X #um
+        dict['Y'] = Y #um
+        dict['Z'] = Z #um  
     
         return (dict)
     
