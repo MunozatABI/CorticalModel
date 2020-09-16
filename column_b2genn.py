@@ -56,7 +56,7 @@ eqs = fl.equation('b2genn')
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-num_cols = 2 #1, 2, 8, 32, 128
+num_cols = 8 #1, 2, 8, 32, 128
 columnsgroup_0 = []
 t1 = time.time()
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
@@ -163,10 +163,10 @@ print('Run Time:', t14 - t13)
 # L5_firing = (spikemonL5E.num_spikes + spikemonL5I.num_spikes)/75*num_cols
 # L6_firing = (spikemonL6E.num_spikes + spikemonL6I.num_spikes)/75*num_cols
 
-L23_firing = (np.count_nonzero((spikemonL23E.t > 200*ms) * spikemonL23E.t))/75*num_cols
-L5_firing = (np.count_nonzero((spikemonL5E.t > 200*ms) * spikemonL5E.t))/75*num_cols
-L6_firing = (np.count_nonzero((spikemonL6E.t > 200*ms) * spikemonL6E.t))/75*num_cols
-THA_firing = (np.count_nonzero((inputspikemon_TH.t > 200*ms) * inputspikemon_TH.t))/75*num_cols
+L23_firing = (np.count_nonzero((spikemonL23E.t > 200*ms) * spikemonL23E.t))/(75*num_cols)
+L5_firing = (np.count_nonzero((spikemonL5E.t > 200*ms) * spikemonL5E.t))/(75*num_cols)
+L6_firing = (np.count_nonzero((spikemonL6E.t > 200*ms) * spikemonL6E.t))/(75*num_cols)
+THA_firing = (np.count_nonzero((inputspikemon_TH.t > 200*ms) * inputspikemon_TH.t))/(75*num_cols)
 
 print('L2/3 firing:', L23_firing)
 print('L5 firing:', L5_firing)
