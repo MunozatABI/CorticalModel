@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 #################### ###########################################################
-tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 
 dict1 = tab1.to_dict("list")
 
@@ -74,7 +74,7 @@ eqs = fl.equation('b2genn')
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-num_cols = 8 #1, 2, 8, 32, 128
+num_cols = 2 #1, 2, 8, 32, 128  #32, 2, 8, 1
 columnsgroup_0 = []
 t1 = time.time()
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
