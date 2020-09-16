@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore')
 ###############################################################################
 ########                   Parameter Definitions                        #######
 #################### ###########################################################
-tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
+tab1 = pd.read_csv('Esser_table2.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 
 dict1 = tab1.to_dict("list")
 
@@ -44,7 +44,7 @@ dict1 = tab1.to_dict("list")
 #       3.00028373, 2.99914853, 0.5003737 , 0.50051599]
 
 ##Simulation Parameters
-duration = 1500*ms     # Total simulation time
+duration = 1200*ms     # Total simulation time
 sim_dt = 0.1*ms           # Integrator/sampling step
 
 # #Set TMS
@@ -204,7 +204,7 @@ print(b2.profiling_summary(net = net, show = 10))
 #axes[1].plot(var_range, L5E_output_rates, 'C1', label = 'L5E')
 #axes[1].plot(var_range, L5I_output_rates, '-k', label = 'L5I')
 
-####Connectivity Plots
+####Connectivity Plots5
 #fl.visualise.neuron_connectivity(1,synapses_group,Neurons)
 #fl.visualise.connectivity_distances(columnsgroup_0, all_synapses)
 
@@ -213,13 +213,15 @@ print(b2.profiling_summary(net = net, show = 10))
 # L5_firing = (spikemonL5E.num_spikes + spikemonL5I.num_spikes)/75*num_cols
 # L6_firing = (spikemonL6E.num_spikes + spikemonL6I.num_spikes)/75*num_cols
 
-L23_firing = (np.count_nonzero((spikemonL23E.t > 500*ms) * spikemonL23E.t))/75*num_cols
-L5_firing = (np.count_nonzero((spikemonL5E.t > 500*ms) * spikemonL5E.t))/75*num_cols
-L6_firing = (np.count_nonzero((spikemonL6E.t > 500*ms) * spikemonL6E.t))/75*num_cols
+L23_firing = (np.count_nonzero((spikemonL23E.t > 200*ms) * spikemonL23E.t))/75*num_cols
+L5_firing = (np.count_nonzero((spikemonL5E.t > 200*ms) * spikemonL5E.t))/75*num_cols
+L6_firing = (np.count_nonzero((spikemonL6E.t > 200*ms) * spikemonL6E.t))/75*num_cols
+THA_firing = (np.count_nonzero((inputspikemon_TH.t > 200*ms) * inputspikemon_TH.t))/75*num_cols
 
 print('L2/3 firing:', L23_firing)
 print('L5 firing:', L5_firing)
 print('L6 firing:', L6_firing)
+print('Thalamus firing:', THA_firing)
 
 # errors = (0.5 - L23_firing)**2 + (0.7 - L5_firing)**2 + (0.2 - L6_firing)**2
 # print('error:', errors)

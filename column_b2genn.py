@@ -38,7 +38,7 @@ warnings.filterwarnings('ignore')
 tab1 = pd.read_csv('Esser_table1.csv', nrows = 68, delimiter=' ', index_col=False) #Define input table
 
 ##Simulation Parameters
-duration = 1500*ms     # Total simulation time
+duration = 1200*ms     # Total simulation time
 sim_dt = 0.1*ms           # Integrator/sampling step
 
 # #Set TMS
@@ -163,10 +163,12 @@ print('Run Time:', t14 - t13)
 # L5_firing = (spikemonL5E.num_spikes + spikemonL5I.num_spikes)/75*num_cols
 # L6_firing = (spikemonL6E.num_spikes + spikemonL6I.num_spikes)/75*num_cols
 
-L23_firing = (np.count_nonzero((spikemonL23E.t > 500*ms) * spikemonL23E.t))/75*num_cols
-L5_firing = (np.count_nonzero((spikemonL5E.t > 500*ms) * spikemonL5E.t))/75*num_cols
-L6_firing = (np.count_nonzero((spikemonL6E.t > 500*ms) * spikemonL6E.t))/75*num_cols
+L23_firing = (np.count_nonzero((spikemonL23E.t > 200*ms) * spikemonL23E.t))/75*num_cols
+L5_firing = (np.count_nonzero((spikemonL5E.t > 200*ms) * spikemonL5E.t))/75*num_cols
+L6_firing = (np.count_nonzero((spikemonL6E.t > 200*ms) * spikemonL6E.t))/75*num_cols
+THA_firing = (np.count_nonzero((inputspikemon_TH.t > 200*ms) * inputspikemon_TH.t))/75*num_cols
 
 print('L2/3 firing:', L23_firing)
 print('L5 firing:', L5_firing)
 print('L6 firing:', L6_firing)
+print('Thalamus firing:', THA_firing)
