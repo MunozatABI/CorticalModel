@@ -27,7 +27,7 @@ import warnings
 import collections
 import brian2genn
 
-set_device('genn', useGPU=True)
+set_device('genn')
 
 b2.start_scope() #clear variables
 start = time.time() #Running time
@@ -56,7 +56,7 @@ eqs = fl.equation('b2genn')
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-num_cols = 1 #1, 2, 8, 32, 128
+num_cols = 32 #1, 2, 8, 32, 128
 columnsgroup_0 = []
 t1 = time.time()
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
