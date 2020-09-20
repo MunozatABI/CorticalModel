@@ -6,7 +6,7 @@
 ###############################################################################
 
 import brian2 as b2
-from brian2 import mV, ms
+from brian2 import mV, ms, set_device
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import cm
@@ -23,6 +23,7 @@ from parameters import *
 import warnings
 import collections
 
+#set_device('cpp_standalone')
 b2.prefs.codegen.target = 'numpy'
 
 b2.start_scope() #clear variables
@@ -74,7 +75,7 @@ eqs = fl.equation('b2genn')
 ###############################################################################
 ########                      Create Neurons                            #######
 ###############################################################################
-num_cols = 2 #1, 2, 8, 32, 128  #32, 2, 8, 1
+num_cols = 25 #1, 2, 8, 32, 128  
 columnsgroup_0 = []
 t1 = time.time()
 columnsgroup_0 = fl.generate.column(num_cols,eqs,0)
@@ -121,28 +122,28 @@ neuron_group = {'L2/3E0': columnsgroup_0[0:50*num_cols],
 
 #Model of TMS activation
 # if TMS == True:
-#     b2.SpikeGeneratorGroup(1, [0], [250]*ms)
+TMS = b2.SpikeGeneratorGroup(1, [0], [300]*ms)
 
 #     TMS = b2.SpikeGeneratorGroup(1, [0], [250]*ms)
 
 # ###############################################################################
 # ########                          Synapses                              #######
 # ###############################################################################      
-#     #Excitatory
-#     TMS_synapse_0_E = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='AMPA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'b'))
-#     TMS_synapse_180_E = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='AMPA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('AMPA', 'c'))
-#     TMS_synapse_0_E.connect(p=var*0.8)
-#     TMS_synapse_180_E.connect(p=var*0.8)
-#     TMS_synapse_0_E.w = 1
-#     TMS_synapse_180_E.w = 1
-    
-#     #Inhibitory
-#     TMS_synapse_0_I = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='GABAA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('GABAA', 'b'))
-#     TMS_synapse_180_I = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='GABAA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('GABAA', 'c'))
-#     TMS_synapse_0_I.connect(p=var*0.2)
-#     TMS_synapse_180_I.connect(p=var*0.2)
-#     TMS_synapse_0_I.w = 1
-#     TMS_synapse_180_I.w = 1
+#Excitatory
+TMS_synapse_0_E = b2.Synapses(TMS, columnsgroup_0, fl.equation('b2genn_synapse'), method = 'rk4', on_pre='x_{}_post += w'.format('AMPA'))
+TMS_synapse_180_E = b2.Synapses(TMS, columnsgroup_180, fl.equation('b2genn_synapse'), method = 'rk4', on_pre='x_{}_post += w'.format('AMPA'))
+TMS_synapse_0_E.connect(p=0.25)
+TMS_synapse_180_E.connect(p=0.25)
+TMS_synapse_0_E.w = 5
+TMS_synapse_180_E.w = 5
+
+# #Inhibitory
+# TMS_synapse_0_I = b2.Synapses(TMS, columnsgroup_0, fl.equation('synapse').format(tr='GABAA',st = 'b'), method = 'rk4', on_pre='x_{}{} += w'.format('GABAA', 'b'))
+# TMS_synapse_180_I = b2.Synapses(TMS, columnsgroup_180, fl.equation('synapse').format(tr='GABAA',st = 'c'), method = 'rk4', on_pre='x_{}{} += w'.format('GABAA', 'c'))
+# TMS_synapse_0_I.connect(p=0.2)
+# TMS_synapse_180_I.connect(p=0.2)
+# TMS_synapse_0_I.w = 1
+# TMS_synapse_180_I.w = 1
 
 t7 = time.time()
 Input_synapses = fl.generate.synapses([Spike], [Input_Neurons], ['AMPA'], [1], [1], [0])

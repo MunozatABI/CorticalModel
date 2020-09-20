@@ -231,7 +231,7 @@ class generate:
                               on_pre='x_{}_post += w'.format(r.loc['Transmitter']))
             syn.connect(condition = 'i != j', p='{} * exp(-((X_pre-X_post)**2 + (Y_pre-Y_post)**2)/(2*(37.5*{})**2))'.format(r.loc['Pmax'],r.loc['Radius'])) #Gaussian connectivity profile
             #syn.w = x[i]
-            syn.w = (r.loc['Strength']/6)  #Weights scaled to match Iriki et al., 1991
+            syn.w = (r.loc['Strength']/8)  #Weights scaled to match Iriki et al., 1991 #6
             #syn.delay = r.loc['MeanDelay']*ms
             #post.delay = '{}*ms'.format(,r.loc['VCond'])
             #syn.delay = ('{}*ms + (((X_pre-X_post)**2 + (Y_pre-Y_post)**2 + (Z_pre-Z_post)**2)/({}*(b2.metre/b2.second)))'.format(r.loc['MeanDelay'],r.loc['VCond']))
